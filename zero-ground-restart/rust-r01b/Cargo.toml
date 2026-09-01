@@ -1,0 +1,18 @@
+[package]
+name = "rust-r01b"
+version = "0.1.0"
+edition = "2024"
+license = "MIT OR Apache-2.0"
+description = "Independent, dependency-free R0.1B semantic realization"
+
+[lib]
+name = "rust_r01b"
+path = "src/lib.rs"
+
+[[bin]]
+name = "r01b-inspect"
+path = "src/bin/r01b_inspect.rs"
+
+[dependencies]
+
+[dev-dependencies]
