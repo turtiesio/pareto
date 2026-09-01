@@ -10,6 +10,16 @@ pub const ARTIFACT_DIGEST_HEX: &str =
 pub const EXPECTED_STATE_COUNT: usize = 82_584;
 pub const EXPECTED_QUIESCENT_COUNT: usize = 10_420;
 pub const OPERATION_COUNT: usize = 17;
+pub const EXPECTED_ORDINAL_STREAM_BYTES: usize = 3_716_290;
+pub const EXPECTED_REPRESENTATIVE_STREAM_BYTES: usize = 18_053_209;
+pub const EXPECTED_ORDINAL_STREAM_SHA256: &str =
+    "253cb73a89dce87bee4ed1c5c4bc22eddffbd848e3a805037d00fd71c16740ec";
+pub const EXPECTED_REPRESENTATIVE_STREAM_SHA256: &str =
+    "5aa508e648df5a43fd6cea5ff0552daed5faa1e9903e6841e3fde657755ef2f5";
+pub const EXPECTED_ORDINAL_TRANSITION_SHA256: &str =
+    "293cca6b94d8dd0e727c6ecf9d55ac0aac0dae8707a365206bf762049056aaa3";
+pub const EXPECTED_REPRESENTATIVE_TRANSITION_SHA256: &str =
+    "4ff1ba87a2f2f30bc1c93678e9d00a61aa3ce37a4b3dd04e65052a976b62dec6";
 
 const ENVELOPE_MAGIC: &[u8; 4] = b"ZGPE";
 const STREAM_MAGIC: &[u8; 4] = b"ZGPS";
@@ -489,7 +499,8 @@ pub struct Machine {
 impl Machine {
     pub fn build() -> Result<Self, Error> {
         let (nodes, state_to_node) = enumerate_states();
-        let (class_of_node, mut classes, refinement_rounds) = refine(&nodes, &state_to_node);
+        let (_initial_class_of_node, mut classes, refinement_rounds) =
+            refine(&nodes, &state_to_node);
 
         for class in &mut classes {
             class.sort_by(|left, right| compare_representatives(&nodes[*left], &nodes[*right]));
@@ -721,6 +732,80 @@ impl Machine {
             },
         ))
     }
+
+    /// Write the canonical one-step transcript for the recovered stream order.
+    ///
+    /// Each record contains the current state envelope, operation spelling,
+    /// optional proof-domain marker, ordered client and action output lists, and
+    /// next state envelope. Variable byte strings use a big-endian u32 length;
+    /// output lists begin with a big-endian u32 item count.
+    pub fn write_transition_transcript<W: Write>(
+        &self,
+        candidate: Candidate,
+        ranks: &[usize],
+        mut output: W,
+    ) -> Result<TransitionSummary, Error> {
+        let envelopes: Vec<Vec<u8>> = (0..self.class_count())
+            .map(|rank| self.envelope(candidate, rank))
+            .collect();
+        let mut digesting = DigestWriter::new(&mut output);
+        digesting.write_all(b"ZGTR")?;
+        digesting.write_all(&[FORMAT_VERSION, candidate.tag()])?;
+        digesting.write_all(&artifact_digest())?;
+        digesting.write_all(&(ranks.len() as u32).to_be_bytes())?;
+        digesting.write_all(&(OPERATION_COUNT as u32).to_be_bytes())?;
+        digesting.write_all(b"proof-domain-membership-v1\0")?;
+        for operation in operations() {
+            write_length_prefixed(&mut digesting, operation.spelling().as_bytes())?;
+        }
+        let mut records = 0usize;
+        for &rank in ranks {
+            if rank >= self.class_count() {
+                return Err(Error::new(format!("invalid recovered rank {rank}")));
+            }
+            for operation in operations() {
+                let step = self.state(rank).apply(operation);
+                let next_rank = self.successor_rank(&step.next);
+                digesting.write_all(b"S")?;
+                write_length_prefixed(&mut digesting, &envelopes[rank])?;
+                digesting.write_all(b"O")?;
+                write_length_prefixed(&mut digesting, operation.spelling().as_bytes())?;
+                digesting.write_all(b"M")?;
+                let membership: &[u8] = match step.membership {
+                    None => b"N",
+                    Some(true) => b"enabled",
+                    Some(false) => b"disabled",
+                };
+                write_length_prefixed(&mut digesting, membership)?;
+                write_tagged_frame_list(&mut digesting, b'C', &step.client)?;
+                write_tagged_frame_list(&mut digesting, b'A', &step.action)?;
+                digesting.write_all(b"N")?;
+                write_length_prefixed(&mut digesting, &envelopes[next_rank])?;
+                records += 1;
+            }
+        }
+        Ok(TransitionSummary {
+            candidate,
+            records,
+            bytes: digesting.bytes,
+            sha256: digesting.sha.finalize_hex(),
+        })
+    }
+}
+
+fn write_length_prefixed<W: Write>(output: &mut W, bytes: &[u8]) -> io::Result<()> {
+    output.write_all(&(bytes.len() as u32).to_be_bytes())?;
+    output.write_all(bytes)
+}
+
+fn write_tagged_frame_list<W: Write>(output: &mut W, tag: u8, frames: &[String]) -> io::Result<()> {
+    output.write_all(&[tag])?;
+    output.write_all(&(frames.len() as u32).to_be_bytes())?;
+    for frame in frames {
+        output.write_all(b"V")?;
+        write_length_prefixed(output, frame.as_bytes())?;
+    }
+    Ok(())
 }
 
 fn enumerate_states() -> (Vec<Node>, HashMap<State, usize>) {
@@ -914,8 +999,9 @@ fn decode_envelope(expected: Candidate, bytes: &[u8]) -> Result<&[u8], Error> {
 
 fn artifact_digest() -> [u8; 32] {
     let mut digest = [0u8; 32];
-    for (index, pair) in ARTIFACT_DIGEST_HEX.as_bytes().chunks_exact(2).enumerate() {
-        digest[index] = (hex_nibble(pair[0]) << 4) | hex_nibble(pair[1]);
+    let encoded = ARTIFACT_DIGEST_HEX.as_bytes();
+    for index in 0..digest.len() {
+        digest[index] = (hex_nibble(encoded[index * 2]) << 4) | hex_nibble(encoded[index * 2 + 1]);
     }
     digest
 }
@@ -930,6 +1016,14 @@ const fn hex_nibble(byte: u8) -> u8 {
 
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub struct StreamSummary {
+    pub candidate: Candidate,
+    pub records: usize,
+    pub bytes: usize,
+    pub sha256: String,
+}
+
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub struct TransitionSummary {
     pub candidate: Candidate,
     pub records: usize,
     pub bytes: usize,
@@ -1000,6 +1094,8 @@ impl Sha256 {
                 let block = self.block;
                 self.compress(&block);
                 self.block_len = 0;
+            } else {
+                return;
             }
         }
         while bytes.len() >= 64 {
@@ -1030,8 +1126,8 @@ impl Sha256 {
         let block = self.block;
         self.compress(&block);
         let mut digest = [0u8; 32];
-        for (chunk, value) in digest.chunks_exact_mut(4).zip(self.state) {
-            chunk.copy_from_slice(&value.to_be_bytes());
+        for (index, value) in self.state.into_iter().enumerate() {
+            digest[index * 4..index * 4 + 4].copy_from_slice(&value.to_be_bytes());
         }
         digest
     }
@@ -1060,8 +1156,8 @@ impl Sha256 {
             0xc67178f2,
         ];
         let mut words = [0u32; 64];
-        for (index, chunk) in block.chunks_exact(4).enumerate() {
-            words[index] = u32::from_be_bytes(chunk.try_into().unwrap());
+        for index in 0..16 {
+            words[index] = u32::from_be_bytes(block[index * 4..index * 4 + 4].try_into().unwrap());
         }
         for index in 16..64 {
             let s0 = words[index - 15].rotate_right(7)
@@ -1133,6 +1229,12 @@ fn encode_hex(bytes: &[u8]) -> String {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use std::sync::OnceLock;
+
+    fn frozen_machine() -> &'static Machine {
+        static MACHINE: OnceLock<Machine> = OnceLock::new();
+        MACHINE.get_or_init(|| Machine::build().unwrap())
+    }
 
     #[test]
     fn sha256_known_vectors() {
@@ -1144,14 +1246,199 @@ mod tests {
             Sha256::digest_hex(b"abc"),
             "ba7816bf8f01cfea414140de5dae2223b00361a396177a9cb410ff61f20015ad"
         );
+        let mut incremental = Sha256::new();
+        incremental.update(b"a");
+        incremental.update(b"b");
+        incremental.update(b"c");
+        assert_eq!(
+            incremental.finalize_hex(),
+            "ba7816bf8f01cfea414140de5dae2223b00361a396177a9cb410ff61f20015ad"
+        );
     }
 
     #[test]
     fn frozen_machine_counts_and_representative_sizes() {
-        let machine = Machine::build().unwrap();
+        let machine = frozen_machine();
         assert_eq!(machine.quiescent_count(), EXPECTED_QUIESCENT_COUNT);
         assert_eq!(machine.class_count(), EXPECTED_STATE_COUNT);
         assert_eq!(machine.state_count(), 83_352);
         assert_eq!(machine.representative_payload_stats(), (0, 236, 14_584_671));
+    }
+
+    #[test]
+    fn refinement_is_a_stable_right_congruence() {
+        let machine = frozen_machine();
+        let mut reference: Vec<Option<Vec<(ImmediateSignature, usize)>>> =
+            vec![None; machine.class_count()];
+        for (node_index, node) in machine.nodes.iter().enumerate() {
+            let signature: Vec<(ImmediateSignature, usize)> = operations()
+                .map(|operation| {
+                    let step = node.state.apply(operation);
+                    (
+                        ImmediateSignature {
+                            membership: step.membership,
+                            client: step.client,
+                            action: step.action,
+                        },
+                        machine.successor_rank(&step.next),
+                    )
+                })
+                .collect();
+            let class = machine.class_of_node[node_index];
+            match &reference[class] {
+                Some(expected) => assert_eq!(expected, &signature),
+                None => reference[class] = Some(signature),
+            }
+        }
+        assert!(reference.into_iter().all(|entry| entry.is_some()));
+    }
+
+    #[test]
+    fn emitted_state_streams_match_b3() {
+        let machine = frozen_machine();
+        let mut ordinal = Vec::new();
+        let ordinal_summary = machine
+            .write_state_stream(Candidate::Ordinal, &mut ordinal)
+            .unwrap();
+        assert_eq!(ordinal_summary.records, EXPECTED_STATE_COUNT);
+        assert_eq!(ordinal_summary.bytes, EXPECTED_ORDINAL_STREAM_BYTES);
+        assert_eq!(ordinal_summary.sha256, EXPECTED_ORDINAL_STREAM_SHA256);
+
+        let mut representative = Vec::new();
+        let representative_summary = machine
+            .write_state_stream(Candidate::Representative, &mut representative)
+            .unwrap();
+        assert_eq!(representative_summary.records, EXPECTED_STATE_COUNT);
+        assert_eq!(
+            representative_summary.bytes,
+            EXPECTED_REPRESENTATIVE_STREAM_BYTES
+        );
+        assert_eq!(
+            representative_summary.sha256,
+            EXPECTED_REPRESENTATIVE_STREAM_SHA256
+        );
+    }
+
+    #[test]
+    fn envelope_decoder_rejects_wrong_or_noncanonical_bytes() {
+        let machine = frozen_machine();
+        let ordinal = machine.envelope(Candidate::Ordinal, 0);
+        for length in 0..ordinal.len() {
+            assert!(machine
+                .recover_envelope(Candidate::Ordinal, &ordinal[..length])
+                .is_err());
+        }
+
+        let mut wrong_magic = ordinal.clone();
+        wrong_magic[0] ^= 1;
+        assert!(machine
+            .recover_envelope(Candidate::Ordinal, &wrong_magic)
+            .is_err());
+        let mut wrong_version = ordinal.clone();
+        wrong_version[4] = 2;
+        assert!(machine
+            .recover_envelope(Candidate::Ordinal, &wrong_version)
+            .is_err());
+        assert!(machine
+            .recover_envelope(Candidate::Representative, &ordinal)
+            .is_err());
+        let mut wrong_digest = ordinal.clone();
+        wrong_digest[6] ^= 1;
+        assert!(machine
+            .recover_envelope(Candidate::Ordinal, &wrong_digest)
+            .is_err());
+        let mut wrong_length = ordinal.clone();
+        wrong_length[41] = 2;
+        assert!(machine
+            .recover_envelope(Candidate::Ordinal, &wrong_length)
+            .is_err());
+        let mut trailing = ordinal.clone();
+        trailing.push(0);
+        assert!(machine
+            .recover_envelope(Candidate::Ordinal, &trailing)
+            .is_err());
+        assert!(machine
+            .recover_envelope(
+                Candidate::Ordinal,
+                &encode_envelope(Candidate::Ordinal, &[0, 0])
+            )
+            .is_err());
+        let invalid_rank = EXPECTED_STATE_COUNT;
+        let invalid_rank_payload = [
+            ((invalid_rank >> 16) & 0xff) as u8,
+            ((invalid_rank >> 8) & 0xff) as u8,
+            (invalid_rank & 0xff) as u8,
+        ];
+        assert!(machine
+            .recover_envelope(
+                Candidate::Ordinal,
+                &encode_envelope(Candidate::Ordinal, &invalid_rank_payload),
+            )
+            .is_err());
+
+        assert!(machine
+            .recover_envelope(
+                Candidate::Representative,
+                &encode_envelope(Candidate::Representative, &[0xff]),
+            )
+            .is_err());
+        let legal_but_noncanonical = b"in:client:O;out:client:EMPTY";
+        assert!(machine
+            .recover_envelope(
+                Candidate::Representative,
+                &encode_envelope(Candidate::Representative, legal_but_noncanonical),
+            )
+            .is_err());
+    }
+
+    #[test]
+    fn stream_decoder_requires_exact_header_count_and_eof() {
+        let machine = frozen_machine();
+        let mut stream = Vec::new();
+        machine
+            .write_state_stream(Candidate::Ordinal, &mut stream)
+            .unwrap();
+
+        let mut wrong_magic = stream.clone();
+        wrong_magic[0] ^= 1;
+        assert!(machine
+            .read_state_stream(Candidate::Ordinal, wrong_magic.as_slice())
+            .is_err());
+        assert!(machine
+            .read_state_stream(Candidate::Representative, stream.as_slice())
+            .is_err());
+        let mut wrong_count = stream.clone();
+        wrong_count[9] ^= 1;
+        assert!(machine
+            .read_state_stream(Candidate::Ordinal, wrong_count.as_slice())
+            .is_err());
+        let mut trailing = stream;
+        trailing.push(0);
+        assert!(machine
+            .read_state_stream(Candidate::Ordinal, trailing.as_slice())
+            .is_err());
+    }
+
+    #[test]
+    #[ignore = "exhaustive 1,403,928-record digest check; run explicitly in release mode"]
+    fn exhaustive_transition_digests_match_b3() {
+        let machine = frozen_machine();
+        let ranks: Vec<usize> = (0..machine.class_count()).collect();
+        let ordinal = machine
+            .write_transition_transcript(Candidate::Ordinal, &ranks, io::sink())
+            .unwrap();
+        assert_eq!(ordinal.records, EXPECTED_STATE_COUNT * OPERATION_COUNT);
+        assert_eq!(ordinal.sha256, EXPECTED_ORDINAL_TRANSITION_SHA256);
+        let representative = machine
+            .write_transition_transcript(Candidate::Representative, &ranks, io::sink())
+            .unwrap();
+        assert_eq!(
+            representative.records,
+            EXPECTED_STATE_COUNT * OPERATION_COUNT
+        );
+        assert_eq!(
+            representative.sha256,
+            EXPECTED_REPRESENTATIVE_TRANSITION_SHA256
+        );
     }
 }

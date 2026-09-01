@@ -10,6 +10,10 @@ from pathlib import Path
 import signal
 import sys
 
+# `-I` prevents ambient import paths from selecting a different bundle. Add
+# only this worker's frozen bundle directory before loading its local modules.
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+
 import r0_record
 
 
@@ -26,6 +30,14 @@ class SimulatedIOError(OSError):
     def __init__(self, kind: str, number: int):
         super().__init__(number, kind)
         self.kind = kind
+
+
+def _bundle_matches(digest: bytes) -> bool:
+    try:
+        _, _, local_digest = r0_record.derive_digests(Path(__file__).resolve().parent)
+    except Exception:
+        return False
+    return local_digest == digest
 
 
 def _emit(value: bytes) -> None:
@@ -56,6 +68,8 @@ def _publish(args: argparse.Namespace) -> int:
     directory = Path(args.directory)
     digest = bytes.fromhex(args.digest)
     payload = bytes.fromhex(args.payload)
+    if not _bundle_matches(digest):
+        return 71
     record = r0_record.encode_record(digest, payload)
     half = len(record) // 2
     temporary = directory / r0_record.TEMP_NAME
@@ -65,7 +79,11 @@ def _publish(args: argparse.Namespace) -> int:
 
     try:
         _stage(0)
-        flags = os.O_WRONLY | os.O_CREAT | os.O_EXCL
+        flags = os.O_WRONLY | os.O_CREAT
+        if args.skip_exclusive_creation:
+            flags |= os.O_TRUNC
+        else:
+            flags |= os.O_EXCL
         if hasattr(os, "O_CLOEXEC"):
             flags |= os.O_CLOEXEC
         fd = os.open(temporary, flags, 0o600)
@@ -120,9 +138,13 @@ def _publish(args: argparse.Namespace) -> int:
 
 
 def _recover(args: argparse.Namespace) -> int:
+    digest = bytes.fromhex(args.digest)
+    if not _bundle_matches(digest):
+        _emit(r0_record.REJECT)
+        return 0
     observation = r0_record.recover(
         Path(args.directory),
-        bytes.fromhex(args.digest),
+        digest,
         bytes.fromhex(args.continuation),
     )
     _emit(observation)
@@ -142,6 +164,7 @@ def _parser() -> argparse.ArgumentParser:
     publish.add_argument("--skip-file-fsync", action="store_true")
     publish.add_argument("--skip-directory-fsync", action="store_true")
     publish.add_argument("--skip-replace", action="store_true")
+    publish.add_argument("--skip-exclusive-creation", action="store_true")
 
     recover = subparsers.add_parser("recover", add_help=False)
     recover.add_argument("--directory", required=True)
@@ -159,4 +182,3 @@ def main() -> int:
 
 if __name__ == "__main__":
     raise SystemExit(main())
-

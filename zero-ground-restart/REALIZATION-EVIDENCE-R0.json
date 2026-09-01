@@ -1,0 +1,359 @@
+{
+  "artifact_scope": {
+    "evidence_file_excluded_from_source_inventory_to_avoid_self_reference": true,
+    "implementation_is_falsification_instrument": true,
+    "record_format_is_candidate_not_architecture": true
+  },
+  "claims": {
+    "cognition": "UNKNOWN: no human study",
+    "malicious_coherent_replacement": "UNSUPPORTED",
+    "physical_media_identity": "UNKNOWN",
+    "power_loss_durability": "UNKNOWN",
+    "two_unlike_physical_realizations": "UNKNOWN/UNSUPPORTED_IN_CURRENT_GUEST",
+    "supported_realization_claim": "two unlike guest-kernel filesystem paths, ext4 and tmpfs"
+  },
+  "deterministic": {
+    "adapter_bundle_sha256": "dd9e9dd4980bedfe6eb7cb9dc2a0b8a1ff996eb308b3b772953f2f8679cead59",
+    "artifact_inventory": {
+      "adapter_manifest_bytes": 11568,
+      "artifact_inventory_sha256": "f26b2d70ed1168e2714dffcdefadc165645d56d2457d012155b6708805588762",
+      "file_count": 6,
+      "files": [
+        {
+          "bytes": 32278,
+          "name": "REALIZATION-CONTRACT-R0.md",
+          "physical_lines": 596,
+          "sha256": "3bdaa119942ef994e4ef0cf1c570d4518a2531bc102505065d967fed08522f15"
+        },
+        {
+          "bytes": 646,
+          "name": "r0_adapter.py",
+          "physical_lines": 29,
+          "sha256": "ee693100aa193d7f0a323e7ab8e5ea5aa6179593a7f6e94f6d2581435ece48dc"
+        },
+        {
+          "bytes": 5239,
+          "name": "r0_record.py",
+          "physical_lines": 172,
+          "sha256": "d5850dc188a23cbc16584e1f851ac1b8c7561de26c5b02327a22e4ae09714708"
+        },
+        {
+          "bytes": 5610,
+          "name": "r0_worker.py",
+          "physical_lines": 184,
+          "sha256": "09c10b7770f9f23ea95a63a1e536d28f59499ad729805c13f3b806e1dda8584b"
+        },
+        {
+          "bytes": 72697,
+          "name": "r0_realization.py",
+          "physical_lines": 1822,
+          "sha256": "8f7288b6b525277e0046204376c5d4edb6fa769e56df67b4f6688a4675c695f6"
+        },
+        {
+          "bytes": 10121,
+          "name": "test_realization_r0.py",
+          "physical_lines": 242,
+          "sha256": "0543f8ddfa23629d4baf0229dc814c59ba61b6989a809fc1dea17da79d2cfb1b"
+        }
+      ],
+      "total_bytes": 126591,
+      "total_physical_lines": 3045
+    },
+    "certificates": {
+      "all": {
+        "bytes": 1668832,
+        "records": 2580,
+        "sha256": "b3afa16ebf70ed89681db166d8ce6c77f42724e123326d871810e4afef5d6f36"
+      },
+      "attack": {
+        "bytes": 82758,
+        "records": 112,
+        "sha256": "2c07d65992a19c4b79deba317126177edf047030890abad4123774bc0ffa480a"
+      },
+      "conformance": {
+        "bytes": 1586074,
+        "records": 2468,
+        "sha256": "5221b50e8e5e0b18ee818cfdd5b4d5ce303151c35bdbb527017ab6b9334090c0"
+      },
+      "encoding": "trials sorted by UTF-8 trial_id; uint32 field count; fields sorted by unsigned UTF-8 key; key is uint32 length plus bytes; value is uint64 length plus bytes; stream is uint64 record length plus record"
+    },
+    "common_mode_controls": {
+      "candidate_parser_rejected_hash_mutation": true,
+      "literal_oracle_calls_candidate_adapter_or_parser": false,
+      "mutant_ignore_hash_output_caught": true,
+      "mutated_literal_table_caught": true,
+      "residual_risk": "suite author, supervisor, generator, and literal verifier share one Python repository and operating environment"
+    },
+    "conformance": {
+      "failed": 0,
+      "guest_cross_backend": {
+        "comparable_trials": 1234,
+        "differing_observations": 0,
+        "status": "PASS"
+      },
+      "kinds": {
+        "coherent_negative_controls": 6,
+        "fault_source_publications": 4,
+        "injected_error_simulations": 20,
+        "publication_cut_rows": 84,
+        "record_faults": 2344,
+        "short_write_simulations": 16,
+        "single_bit_flips": 2064,
+        "truncations": 258
+      },
+      "passed": 2468,
+      "total": 2468
+    },
+    "contract_sha256": "3bdaa119942ef994e4ef0cf1c570d4518a2531bc102505065d967fed08522f15",
+    "deletion_attacks": {
+      "component_responsibilities": {
+        "all_persisted_distinction": {
+          "left_encoding_hex": "",
+          "required_left_hex": "0200000000",
+          "required_right_hex": "020000000100",
+          "right_encoding_hex": "",
+          "verdict": "MUST_SURVIVE_WITHIN_R0"
+        },
+        "in_band_suite_digest": {
+          "adapted_checks": 595,
+          "adapted_failures": 0,
+          "candidate_record_bytes": {
+            "P0": 32,
+            "P1": 33
+          },
+          "certificate_bytes": 66622,
+          "certificate_sha256": "75b984196a488c418e76d86ce79a786968eaf82f4f97dd23016d2aa4311f5810",
+          "execution_boundary": "in-process alternate encoder/parser, not a second fresh-process realization",
+          "external_state": "existing trusted 32-byte suite digest in recovery bundle",
+          "recipe": "persist P || H; split final 32 bytes; recompute H from trusted D, uint64 payload length, payload, and record tag",
+          "verdict": "MAY_REBUILD_WITHIN_R0"
+        },
+        "integrity_comparison_responsibility": {
+          "minimal_witness": {
+            "history": "valid no-H P0 followed by APPEND_ZERO",
+            "observed_hex": "020000000100",
+            "required_hex": "01"
+          },
+          "verdict": "MUST_SURVIVE_WITHIN_R0"
+        },
+        "raw_payload_bytes": {
+          "externalized_lookup_entries": 2,
+          "externalized_lookup_key_bytes": 64,
+          "verdict": "MAY_REBUILD_ONLY_IF_HASH_DISTINCTION_AND_LOOKUP_SURVIVE"
+        }
+      },
+      "mechanisms": {
+        "delete_backend_validator": "UNKNOWN_NOT_EXECUTED; selector/validator remains charged",
+        "delete_directory_fsync": "NO_WITNESS_IN_R0 across 28 rows; power-loss role UNKNOWN",
+        "delete_exclusive_creation": "NO_WITNESS_IN_R0 across 28 isolated-directory rows",
+        "delete_file_fsync": "NO_WITNESS_IN_R0 across 28 rows; power-loss role UNKNOWN",
+        "delete_process_reaping": "UNKNOWN_NOT_EXECUTED; wait/isolation remains charged",
+        "delete_replace": {
+          "differing_rows": 12,
+          "smallest_observed_witness": "attack/delete-replace/E/CREATE/K4/repeat-0",
+          "verdict": "WITNESSED_REQUIRED_WITHIN_R0"
+        },
+        "delete_stage_supervisor": "UNKNOWN_NOT_EXECUTED; scheduling/process-control remains charged",
+        "delete_verifier": "comparison responsibility externalizes to a human or service"
+      },
+      "rows_failed_as_expected": 12,
+      "rows_matching_contract": 100,
+      "rows_total": 112
+    },
+    "suite": {
+      "C_hex": "",
+      "P0_hex": "",
+      "P1_hex": "00",
+      "Y0_hex": "",
+      "Y1_hex": "00",
+      "suite_digest_sha256": "d7f52ce7e550acaf06e72798d79e01ae8f8570e360a568cf8150edc9ae9e77c5",
+      "total_opaque_bytes": 2
+    }
+  },
+  "measurements": {
+    "excluded_from_deterministic_certificate": true,
+    "filesystem_proxies": {
+      "E": {
+        "available_block_delta": 1291,
+        "filesystem": "ext4",
+        "mount": "/dev/sda1 on /",
+        "note": "shared-system statvfs movement is not attributable to R0",
+        "statfs_magic_hex": "0000ef53"
+      },
+      "T": {
+        "available_block_delta": 0,
+        "filesystem": "tmpfs",
+        "mount": "tmpfs on /dev/shm",
+        "note": "tmpfs may traverse configured swap",
+        "statfs_magic_hex": "01021994"
+      }
+    },
+    "run": {
+      "command": "PYTHONDONTWRITEBYTECODE=1 python3 r0_realization.py --full",
+      "external_wall_seconds": 131.55,
+      "tests": {
+        "command": "PYTHONDONTWRITEBYTECODE=1 python3 -m unittest -v test_realization_r0.py",
+        "passed": 18,
+        "wall_seconds": 9.078
+      }
+    },
+    "runtime_nanoseconds": {
+      "all_trial_child_cpu": {
+        "max": 149001999,
+        "median": 44042000,
+        "min": 36639000,
+        "p95": 86295000,
+        "samples": 2580,
+        "sum": 125491109000
+      },
+      "all_trial_wall": {
+        "max": 154350550,
+        "median": 44564664,
+        "min": 37006642,
+        "p95": 89523645,
+        "samples": 2580,
+        "sum": 127617708042
+      },
+      "publisher_wall": {
+        "max": 82856113,
+        "median": 44716278,
+        "min": 36770408,
+        "p95": 55711150,
+        "samples": 236,
+        "sum": 10838518014
+      },
+      "recovery_wall": {
+        "max": 90317631,
+        "median": 44239316,
+        "min": 37006642,
+        "p95": 53958802,
+        "samples": 2580,
+        "sum": 116779190028
+      },
+      "worker_internal_phase_timing": "UNKNOWN: no extra metrics channel was added"
+    },
+    "storage": {
+      "adapter_manifest_bytes": 11568,
+      "candidate_record_bytes": {
+        "P0": 64,
+        "P1": 65
+      },
+      "external_expected_digest_bytes": 32,
+      "observed_maxima": {
+        "authoritative_allocated_bytes": 4096,
+        "authoritative_logical_bytes_including_faults": 66,
+        "directory_entries": 2,
+        "peak_simultaneous_logical_file_bytes": 129,
+        "temporary_allocated_bytes": 4096,
+        "temporary_logical_bytes": 65
+      },
+      "source_contract_test_artifact_bytes": 126591,
+      "total_system_storage": "UNKNOWN: shared runtime, kernel, hypervisor, host, and media not attributable"
+    }
+  },
+  "non_scalar_dimensions": {
+    "authoring_burden": {
+      "artifact_bytes": 126591,
+      "artifact_files": 6,
+      "artifact_physical_lines": 3045,
+      "manual_decision_count": "UNKNOWN"
+    },
+    "evolution": {
+      "compatible_derived_observer": "PASS for both finite payload positions; zero migration bytes",
+      "format_version_generation_rollback": "UNSUPPORTED",
+      "split_extension": "UNSUPPORTED_WITHOUT_EXTERNAL_INFORMATION"
+    },
+    "explainability": {
+      "conformance_failure_count": 0,
+      "exact_tags_and_trial_witnesses": true,
+      "human_comprehension": "UNKNOWN"
+    },
+    "human_cognition": {
+      "human_study": "UNKNOWN/NOT RUN",
+      "loc_treated_as_cognitive_evidence": false,
+      "operator_choices": [
+        "backend set",
+        "full versus focused mode"
+      ]
+    },
+    "information_distinction_preservation": {
+      "finite_false_accepts_or_rejects": 0,
+      "guest_cross_backend_projection": "PASS",
+      "separating_observations_hex": [
+        "0200000000",
+        "020000000100"
+      ]
+    },
+    "information_loss_risk": {
+      "coherent_replacement": "UNDETECTED",
+      "finite_sha256_collision": "not observed; non-collision remains assumption",
+      "physical_and_power_faults": "UNKNOWN/UNSUPPORTED",
+      "single_bit_cases": 2064,
+      "truncation_cases": 258
+    },
+    "operations": {
+      "fresh_publisher_processes": 236,
+      "fresh_recovery_processes": 2580,
+      "publisher_sigkills_and_reaps": 168,
+      "publisher_stage_acknowledgements": 936,
+      "strace_available": true,
+      "strace_used": false,
+      "whole_process_syscall_counts": "UNKNOWN; protocol calls are explicit but not mislabeled as loader/runtime totals"
+    },
+    "persistent_state": {
+      "candidate_in_band_overhead_bytes": 64,
+      "candidate_record_bytes": [
+        64,
+        65
+      ],
+      "smaller_no_in_band_digest_candidate_bytes": [
+        32,
+        33
+      ],
+      "verdicts": "see deterministic.deletion_attacks"
+    },
+    "portability": {
+      "ext4_tmpfs_finite_semantics": "PASS",
+      "other_operating_systems": "UNSUPPORTED/UNTESTED",
+      "physical_portability": "UNKNOWN"
+    },
+    "query_navigation_burden": {
+      "adapter_calls_per_accepted_recovery": 2,
+      "continuation_bytes": 0,
+      "continuations": 1,
+      "search_or_index_infrastructure": 0,
+      "specification_files_hashed_per_worker_start": 4
+    },
+    "runtime": "see measurements.runtime_nanoseconds; excluded from certificate",
+    "semantic_machinery": {
+      "adapter_bundle_sha256": "dd9e9dd4980bedfe6eb7cb9dc2a0b8a1ff996eb308b3b772953f2f8679cead59",
+      "full_artifact_inventory_sha256": "f26b2d70ed1168e2714dffcdefadc165645d56d2457d012155b6708805588762",
+      "runtime_and_kernel_bytes": "UNKNOWN"
+    },
+    "storage": "see measurements.storage; total remains incomplete",
+    "trusted_computing_base": {
+      "E_specific": [
+        "Linux ext4",
+        "guest block and virtual controller stack",
+        "unknown hypervisor/host storage/controller/cache/physical medium"
+      ],
+      "T_specific": [
+        "Linux tmpfs and VM",
+        "guest swap subsystem and possible swapfile path",
+        "unknown hypervisor host RAM/swap/storage/physical medium"
+      ],
+      "common": [
+        "suite and independent literal verifier",
+        "adapter, record, worker, supervisor, generator, injector, serializer",
+        "local contract/bundle digest guard",
+        "CPython and standard library",
+        "glibc statfs",
+        "Linux VFS/process/signal/scheduler/pipe/wait",
+        "SHA-256 finite non-collision assumption",
+        "path, statfs, and mount validators"
+      ],
+      "total_tcb_bytes": "UNKNOWN"
+    }
+  },
+  "schema": "zero-ground-realization-evidence-r0-v1"
+}
