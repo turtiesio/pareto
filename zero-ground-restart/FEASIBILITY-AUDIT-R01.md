@@ -243,6 +243,20 @@ new TCB.  Those 144 paths remain a retained attack input, not a complete
 R0.1 schema.  A new fully expanded path registry and one deletion mutation per
 expanded path are required before implementation.
 
+### E10 — incorporated recovery-fault histories have no `B` production
+
+Section 1.1 calls its publication-shaped crossing list exhaustive.  It has no
+crossing for installing or mutating a recovery-only `state.bin`, yet section 5
+requires thousands of incorporated R0 bit-flip, truncation, wrong-suite,
+nonregular, and coherent-replacement histories.  Treating those bytes as an
+undeclared setup side channel would violate the boundary method.
+
+A correction needs separate, explicit publication and recovery-only `B`
+productions.  The latter must cross the exact installed entry kind and bytes
+(or an exact factorization proven sufficient), followed by the recovery
+request and observation.  Backend, injector implementation, and expected label
+remain charged `L` configuration rather than hidden state.
+
 ## Trace and environment feasibility
 
 Independent tracing is locally feasible with the trial supervisor executed
