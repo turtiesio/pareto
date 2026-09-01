@@ -23,3 +23,6 @@ producer-exit reconstruction in two fresh consumer processes per candidate over
 all 82,584 classes and 1,403,928 one-step operations per consumer. B3 does not
 establish crash/torn-write durability, unlike-runtime portability, or unlike
 physical realization.
+
+The consolidated result is in `FIRST-MILESTONE.md`; `FORMAL-AUDIT-B2.md`
+records the independent proof audit and the exact scope of its claims.

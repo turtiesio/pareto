@@ -130,7 +130,7 @@ opaque coordinates:
 - the latest accepted occurrence and its ordering change observation/action;
 - pending versus acknowledged action changes future status;
 - an action retains its captured decision when current content later changes;
-- action-key association changes enabledness and status;
+- action-key association changes next-crossing-domain membership and status;
 - an owed output versus the same already-crossed output changes whether
   `resume` emits at a logical cut. Fresh-process reconstruction of every
   generated logical cut is exercised in B3; physical output-delivery recovery
@@ -161,10 +161,10 @@ specification bundle, generator, parser, verifier, runtime, dependency
 availability, and rebuild time remain charged to storage, operations, and TCB.
 
 In a singleton deployment whose exact B1 specification is fixed externally, a
-per-instance digest is not history-witnessed MUST information. Its current
-encoding is 64 UTF-8 hexadecimal characters; 32 bytes is only theoretical
-binary packing. It may be
-omitted, but doing so moves correct bundle selection into deployment
+per-instance digest is not history-witnessed MUST information. Its B2
+in-process encoding is 64 UTF-8 hexadecimal characters; B3 packs those digest
+bits into 32 bytes inside its envelope. It may be omitted, but doing so moves
+correct bundle selection into deployment
 configuration and TCB. If specification choice becomes a contract-visible
 environment/history distinction, a version-selection responsibility must then
 survive. SHA-256 collision resistance is assumed, not proved.
@@ -196,7 +196,8 @@ added to the permitted future language.
 | Dimension | A — quotient ordinal | B — canonical representative |
 |---|---|---|
 | distinction preservation | exact for all 82,584 generated B1 classes | exact for all 82,584 generated B1 classes |
-| per-instance logical persistence | 17 bits; 3 packed bytes, plus optional current 64-character hex guard (32 bytes only if theoretically binary-packed) | 0–236 UTF-8 bytes, median 181 over full universe, plus the same optional guard |
+| per-instance logical persistence | 17-bit responsibility; 3 packed payload bytes | 0–236 canonical UTF-8 payload bytes, median 181 over the full universe |
+| exercised B3 envelope | fixed 45 bytes: 42-byte magic/version/tag/digest/length header plus 3-byte rank | 42–278 bytes: the same 42-byte header plus representative payload |
 | semantic machinery | rank ordering, generated decoder and transition/output table | frame parser, raw replay, canonical search/reducer, decoder |
 | human cognition | opaque without tooling; actual burden `UNKNOWN` | surface is inspectable but synthetic-history confusion risk; actual burden `UNKNOWN` |
 | authoring burden | external B1 authoring unchanged; table/migration maintenance unmeasured | external B1 authoring unchanged; canonicalization maintenance unmeasured |
@@ -204,11 +205,11 @@ added to the permitted future language.
 | runtime | finite table operations are O(1); B3 reconstruction ran in fresh CPython processes on the same host, without a startup benchmark | decode/replay is O(representative bytes/crossings); B3 reconstruction ran in fresh CPython processes on the same host, without a startup benchmark |
 | shared storage | 238,884 explicit domain/transition/output cells; about 19,635,161 bytes as an incomplete textual-table proxy | source/parser plus canonicalization machinery; storing all representatives also moves substantial state into a shared map |
 | operations | exact rank/table/spec coordination and migration | exact syntax/order/spec coordination and canonical recovery |
-| TCB | capture/durability, runtime, spec, quotient generator, table, decoder, verifier, medium | capture/durability, runtime, spec, parser, replay oracle, canonicalizer, verifier, medium |
+| TCB | capture/durability, runtime, spec, quotient generator, table, decoder, envelope codec/loader, verifier, medium | capture/durability, runtime, spec, parser, replay oracle, canonicalizer, envelope codec/loader, verifier, medium |
 | evolution | one corpus observer factored through; a demonstrated splitting addition cannot migrate | identical tested boundary; representative cannot recover the demonstrated split past |
 | portability | compact physical word but meaningless without exact tables | suitable for sequential/text-like media but depends on exact bytes/order/replay |
 | explainability | needs class decoder and witness map | shows a behavioral example, not the actual explanation history |
-| information-loss risk | wrong rank/table/version can silently reinterpret; split evolution impossible | bad canonicalization or provenance confusion; split evolution impossible |
+| information-loss risk | wrong rank/table/version can silently reinterpret; B3's artifact digest does not integrity-bind the rank payload; split evolution impossible | bad canonicalization or provenance confusion; B3's artifact digest does not integrity-bind representative payload; split evolution impossible |
 
 No weighted scalar was used. Candidate A is smaller and faster per instance;
 Candidate B exposes a compact behavioral example and fits unlike sequential
@@ -220,7 +221,10 @@ objects and allocator overhead, interpreter and OS, filesystem framing, durable
 boundary capture, packaging, logs, redundancy, and physical media. The
 executable spec/verifier inventory is separately reported as 131,089 bytes and
 3,253 physical lines across eight files; that too is not a total deployment
-size.
+size. B3 additionally uses a 40,424-byte process/envelope probe and a 5,789-byte
+focused verifier. Its all-class test streams are 3,716,290 bytes for the ordinal
+encoding and 18,053,209 bytes for the representative encoding; those streams
+are exhaustive test batches, not required per-instance deployment state.
 
 A literal trace is a third useful attack baseline. It preserves B1 but retains
 many distinctions the quotient proves unnecessary, grows without bound, and
@@ -258,13 +262,17 @@ relevant failure conditions, and the observation comparator.
   specification.
 - Constant-rule deletion moved the constant and its validity range into the
   specification.
-- A dedicated rejection channel was not deleted: B1 declares rejected proposals
-  to be proof-level non-events. Domain selection still lives in specification,
-  executable selector code, and TCB. A real refusal response would cross the
-  boundary, enlarge history, and require a new experiment.
+- B1 has no dedicated rejection channel: rejected proposals are proof-level
+  non-events. Domain selection still lives in specification, executable
+  selector code, and TCB. A real refusal response would cross the boundary,
+  enlarge history, and require a new experiment.
 - Digest deletion removes a same-runtime artifact-mismatch guard and moves exact
   artifact selection into deployment operations and TCB; it is not a general
   portability mechanism.
+- B3 envelope framing moves cross-process decoding into magic/version/tag/length
+  bytes plus a 40,424-byte codec/probe. Its artifact digest selects semantics but
+  does not protect state payload integrity; an integrity mechanism remains an
+  operational/TCB responsibility rather than zero complexity.
 - Index/cache deletion moves work into recomputation. The measurement only
   clears an in-process replay cache; B3 executes fresh processes but records no
   startup benchmark.

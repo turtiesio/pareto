@@ -90,3 +90,14 @@ Erasure, confidentiality, authority, time, concurrency, malformed bytes,
 capture failures, physical exactly-once effects, split-class evolution, human
 budgets, and resource deadlines are outside C0. They remain unsupported, not
 passing tests.
+
+## B2 semantic correction after this attack
+
+The attack's word `disabled` is not a newly invented response frame. Final B1
+uses it only as the proof oracle's marker that a proposed frame is outside a
+history's declared next-crossing domain. A rejected proposal is a non-event and
+does not cross the boundary. Equivalence compares the two domains before their
+enabled successors, which preserves the union-versus-intersection attack
+without smuggling a second, unrecorded observation channel. A realization that
+returns an actual refusal message would require a new history grammar and fresh
+collision experiment.

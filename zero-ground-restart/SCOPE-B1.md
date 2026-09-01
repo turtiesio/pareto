@@ -75,8 +75,8 @@ bytes describes only theoretical binary packing.
 ## Common-mode risk
 
 The raw oracle imports no quotient or candidate code. Literal goldens,
-metamorphic equivalences, an exhaustive logical-cut matrix, differential tests, and
-a deliberate transition-table mutation provide independent pressure. However,
+metamorphic equivalences, an exhaustive logical-cut matrix, differential tests,
+and a deliberate transition-table mutation provide independent pressure. However,
 the oracle, quotient, candidates, and tests still share the B1 reading, frame
 values, CPython runtime, standard library, and one host. Correlated
 specification/runtime defects remain possible.
