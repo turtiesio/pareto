@@ -44,6 +44,7 @@ L_descriptor = {
   history_production,
   backend,
   mechanism_manifest,
+  observer_profile,
   setup,
   cut,
   requested_payload,
@@ -60,8 +61,8 @@ implicit cross-product, grammar union, or unregistered continuation.
 
 ### 1.2 Subject interface `B`
 
-For an applicable subject descriptor, the complete ordered `B` history is
-exactly one of two tagged productions:
+For a subject descriptor whose execution reaches `B`, the complete ordered
+`B` history is exactly one of two tagged productions:
 
 ```text
 publication_history =
@@ -79,6 +80,14 @@ request_recover(continuation)
 recovery_observation
 ```
 
+A registered subject descriptor may instead terminate entirely at `L` with
+`execution=CONTROL_UNAVAILABLE` before any `B` crossing.  In particular, this
+is the required result for non-`NORMAL` `DROP_STAGE_CONTROLLER` rows.  Such a
+row retains the attempted continuation and its structured unknown result, but
+it has no empty, synthetic, or partially projected `B` history.  Applicability
+therefore describes the registered laboratory attempt; it is not evidence that
+the requested subject continuation was realized.
+
 A third registered `LAB_ONLY` descriptor production supplies a frozen
 malformed envelope, comparator record, measurement fixture mutation, replay
 request, or conditional apparatus probe directly at `L`. It has no `B`
@@ -95,10 +104,12 @@ nonregular entry cannot arrive through an undeclared setup channel. Backend,
 fixture-installer implementation, mutation recipe name, and expected label
 remain charged `L` configuration and do not replace the crossed fixture bytes.
 
-`publish_result` is absent only when the publisher is killed. Its wire values,
-and the recovery values, remain the R0.1 values pinned by the semantic registry.
-No selector, checkpoint, trace, diagnostic, timing, PID, trial ID, verifier
-result, or measurement uses `B`.
+Within a publication history that reaches `B`, `publish_result` is absent only
+when the publisher is killed. A recovery-only history has no publisher, and a
+`CONTROL_UNAVAILABLE` attempt has no `B` history at all. The publication and
+recovery wire values remain the R0.1 values pinned by the semantic registry. No
+selector, checkpoint, trace, diagnostic, timing, PID, trial ID, verifier result,
+or measurement uses `B`.
 
 Define the canonical function `BH(d,o)` as the typed encoding, specified in
 section 3, of the complete `B` history produced from descriptor `d` and observed
@@ -115,9 +126,10 @@ B_response(d,o) = typed(publish_result_list, recovery_observation)
 crossing exists and length one otherwise; no null or implicit sentinel is used.
 
 Two rows are behaviorally comparable iff their `B_input_key` bytes are equal,
-their registry applicability permits execution, and their only differing
-descriptor coordinates are explicitly paired `L` realization coordinates
-such as backend or mechanism manifest. Their required relation is:
+both executions are `COMPLETE`, both produced an exact `B_response`, their
+registry applicability permits execution, and their only differing descriptor
+coordinates are explicitly paired `L` realization coordinates such as backend
+or mechanism manifest. Their required relation is:
 
 ```text
 B_response(left) == B_response(right)
@@ -188,11 +200,16 @@ value encoding is legal.
 | `0a` | structured unsupported | `TV(reason_text)` |
 | `0b` | closed enum | `u16be(namespace) || u16be(code)` |
 
-Every map key is printable ASCII, encoded as `u16be(length)||key_bytes`, unique,
-and ordered by unsigned key bytes. Text is not normalized: the retained UTF-8
-bytes are authoritative. Controlled identifiers and enum labels use ASCII.
-Reasons and needed-evidence text must be nonempty. There is no null, float,
-host-width integer, unordered set, duplicate key, NaN, infinity, or bare
+Tags `01` and `02` encode distinct typed values `U64(v)` and `I64(v)` even when
+both can represent the same nonnegative mathematical integer.  Every schema
+field declares which type it accepts; a bare host-language integer is not a
+wire type.  Every map key consists only of printable ASCII bytes, is encoded as
+`u16be(length)||key_bytes`, is unique, and is ordered by unsigned key bytes.
+The generic codec permits the empty key (length zero); all closed R0.1B maps
+nevertheless declare named nonempty keys. Text is not normalized: the retained
+UTF-8 bytes are authoritative. Controlled identifiers and enum labels use
+ASCII. Reasons and needed-evidence text must be nonempty. There is no null,
+float, host-width integer, unordered set, duplicate key, NaN, infinity, or bare
 placeholder string. A set is an explicitly sorted list under a registry rule.
 
 The only unknown leaf is tag `09`; it always has both nonempty members. The
@@ -210,9 +227,14 @@ numeric sort. `p95` is the value at zero-based index
 
 ### 4.1 Trial identity
 
-Before `D_sem` exists, let `s0` be the symbolic case map in semantic gate `S0`.
-It contains no exact digest-bearing fixture, trial ID, ordinal, realization ID,
-final semantic-freeze ID, or expected answer.  Its provisional identity is:
+Before `D_sem` exists, let `s0` be only the tagged symbolic `L` boundary input
+in semantic gate `S0`: the applicable fields of section 1's descriptor, with a
+symbolic recovery-fixture recipe where exact digest-bearing bytes do not yet
+exist. Taxonomy, origin, applicability, reachability, comparison rules,
+expected answers, trial ID, ordinal, realization ID, and final semantic-freeze
+ID are registry metadata and are not hashed as boundary input. Two authored
+rows with identical `TV(s0)` must be merged or rejected as an oracle conflict;
+adding a family label cannot make them distinct. Its provisional identity is:
 
 ```text
 case_digest = SHA256(ASCII("ZGR01B-CASE") || 00 || TV(s0))
@@ -220,8 +242,8 @@ case_id = ASCII("r01b-case-") || lowercase_hex_64(case_digest)
 ```
 
 After `D_sem` exists, let `d0` be the exact descriptor identity map.  It
-contains the case ID, history production, backend, mechanism manifest, exact
-`B` inputs or exact recovery fixture, cut, injected fault, and repetition.  It
+contains the case ID, history production, backend, mechanism manifest, observer
+profile, exact `B` inputs or exact recovery fixture, cut, injected fault, and repetition.  It
 excludes `semantic_freeze_id`, `realization_id`, expected answers, `trial_id`,
 and `ordinal`; otherwise hashing the registry or a realization would feed back
 into its row identities.  Then:
@@ -296,6 +318,32 @@ of typed text, not an unknown spelling embedded in another enum.
 full conformance is `FAIL` and empty otherwise.  The literal-oracle registry
 freezes every permitted reason code.  A free-form diagnostic stays in the raw
 pack and cannot change the reason oracle.
+
+The literal oracle stores one expected behavioral result for every explicit
+comparison edge, not merely one value per descriptor.  The envelope's single
+behavioral coordinate is the deterministic aggregate over all executed edges
+incident to that descriptor: `DIFFER` if any edge differs; otherwise `UNKNOWN`
+if any edge is unknown; otherwise `MATCH` if at least one edge was compared;
+otherwise `NOT_COMPARED`.  Per-edge results remain in the canonical record
+stream, so the aggregate never erases a simultaneous cross-backend match and
+same-backend deletion difference.  An intentional, correctly observed
+`DIFFER` does not by itself make full conformance fail.
+
+The six coordinates are observation results, while the registry contains the
+precommitted result expected when the exact declared fixture is supplied and
+all required evidence is available.  Unexpected runtime, subject, or apparatus
+outcomes are retained as actual coordinates and compared with that oracle;
+they never rewrite it.  `CONTROL_UNAVAILABLE`, an admitted structured unknown,
+or a conditional unsupported row may therefore be the exact precommitted
+result rather than a hidden execution pass.
+
+Full conformance aggregates every required row check with this precedence:
+`FAIL` if any check fails; otherwise `UNKNOWN` if any check is unknown;
+otherwise `UNSUPPORTED` if any applicable check is explicitly unsupported;
+otherwise `NOT_APPLICABLE` if there are no applicable checks; otherwise
+`PASS`. Every constituent check and its status remains in the canonical record
+stream. In particular, an unavailable comparison cannot be converted to a
+match merely because another edge matched.
 
 An alternative can therefore retain a conditional oracle while being
 unavailable here:
@@ -384,6 +432,11 @@ passive-observer evidence required. A future passive observer must have its own
 frozen trace semantics, loss detection, provenance, permissions, and TCB before
 it can change that coordinate. Availability of local tracefs is not evidence
 that this gate has passed.
+
+The current R0.1B semantic profile freezes the active-ptrace observer and
+therefore freezes these rows at `UNKNOWN`. A future passive observer creates a
+new semantic profile and new case identities; it may not mutate the oracle of
+an existing row after execution.
 
 ## 8. Replay and retained attack identities
 
@@ -531,8 +584,16 @@ tagged history production, exact paired setup/payload positions or symbolic
 recovery recipe, cut reachability, manifest/backend applicability, fault,
 repetition, and comparison rule.  Expected answers are deliberately excluded
 from case/trial identity and live in the separately authored literal-oracle
-registry linked by case ID.  Its
-`S1` form must replace every symbolic recovery recipe with the complete exact
+registry linked by case ID.
+
+The emitted symbolic registry therefore stores `identity` and rebuildable
+`metadata` separately. `identity` is exactly `s0`; `metadata` carries family,
+origin, comparison rules, reachability, and applicability. Deleting the
+generated metadata bytes is permitted only as `MAY_REBUILD` from the retained
+generator and frozen specification; moving those rules into human convention
+is not deletion.
+
+Its `S1` form must replace every symbolic recovery recipe with the complete exact
 fixture and add final trial ID, ordinal, canonical descriptor-template bytes, exact
 comparison partner, and exact wire-oracle linkage.  Only registered pairs are legal;
 for the base corpus `ABSENT*` pairs with `P0` and `VALID_P0*` with `P1` unless a
@@ -582,8 +643,26 @@ accepted; unavailable knowledge uses tag `09` or `0a`.
 It must contain exact `B` responses, status coordinates, applicability,
 conditional alternatives, expected attack failure, and smallest-witness order.
 It may not call the candidate publisher, recovery parser, adapter, normalizer,
-or trace interpreter to generate its answer. Common-mode mutation controls and
-their expected failures are registry rows.
+or trace interpreter to generate its answer.  For each subject row it also
+contains cut reachability, the expected terminal and wait order, and a closed
+operation expectation for exclusive/nonexclusive acquisition, file
+stabilization, authoritative selection, directory stabilization, causal
+signal, exact-publisher reap, recovery `exec`, and every explicitly injected
+failure.  Each expectation distinguishes at least `NOT_REACHED`,
+`OBSERVED_ABSENT`, `OBSERVED_SUCCESS`, `OBSERVED_KERNEL_ERROR(errno)`, and
+`SIMULATED_ERROR_WITHOUT_KERNEL_ENTRY(errno)`, and names the independent
+evidence sources required to establish it.  These are expected facts; the raw
+trace and actual normalized facts remain retained observations.
+
+The only registered errno coordinates in the base oracle are `NONE`,
+`EEXIST_17`, and `EIO_5`. Any other observed errno is retained but yields the
+closed unregistered-errno failure/unknown result; it never widens the oracle at
+runtime.
+
+Every explicit comparison edge has its own expected `MATCH`, `DIFFER`, or
+`UNKNOWN` result and a minimized witness order.  The row-level behavioral
+coordinate is derived only by section 5's frozen aggregation rule.  Common-mode
+mutation controls and their expected failures are registry rows.
 
 ## 12. Boundary-scoped classification
 

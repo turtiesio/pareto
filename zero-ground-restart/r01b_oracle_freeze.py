@@ -12,12 +12,31 @@ from typing import Any
 
 
 CASE_TAG = b"ZGR01B-CASE\x00"
+EDGE_TAG = b"ZGR01B-EDGE\x00"
 ABSENT = "00"
 REJECT = "01"
 OK_Y0 = "0200000000"
 OK_Y1 = "020000000100"
 NO_CROSSING = "NO_CROSSING"
 NO_OBSERVATION = "NO_OBSERVATION"
+HERE = Path(__file__).resolve().parent
+STATUS_REGISTRY_PATH = HERE / "R01B-STATUS-REGISTRY.json"
+STATUS_REGISTRY_SHA256 = "3cd692eeebaeb55497bd73bc5e21156e6a706eef7a2b75c4f2e9316c2e2892d9"
+STATUS_REGISTRY_BYTES = STATUS_REGISTRY_PATH.read_bytes()
+if hashlib.sha256(STATUS_REGISTRY_BYTES).hexdigest() != STATUS_REGISTRY_SHA256:
+    raise RuntimeError("pinned common status registry changed")
+STATUS_REGISTRY = json.loads(STATUS_REGISTRY_BYTES)
+STATUS_ENUMS = {
+    name: [item["label"] for item in table["codes"]]
+    for name, table in STATUS_REGISTRY["status_coordinate_registry"].items()
+}
+OPERATION_ORDER = tuple(STATUS_REGISTRY["operation_registry"])
+OPERATION_EXPECTATIONS = tuple(
+    item["label"] for item in STATUS_REGISTRY["operation_fact_registry"]
+)
+ERRNO_COORDINATES = tuple(STATUS_REGISTRY["errno_coordinate_registry"])
+CONFIGURED_SOURCES = tuple(STATUS_REGISTRY["configured_source_registry"])
+EVIDENCE_SOURCES = tuple(STATUS_REGISTRY["evidence_source_registry"])
 
 
 def canonical_json(value: Any) -> bytes:
@@ -74,6 +93,277 @@ def new_observation(case: str) -> str:
 
 def error_result(slot: int, source: int, number: int) -> str:
     return (b"\x11" + bytes((slot, source)) + struct.pack(">i", number)).hex()
+
+
+def reached(body: dict[str, Any], slot: int) -> bool:
+    """Whether work ending immediately before J<slot> is reached."""
+    if body["history_production"] != "PUBLICATION":
+        return False
+    if body["manifest"] == "DROP_STAGE_CONTROLLER" and body["cut"] != "NORMAL":
+        return False
+    if body["family"] == "OCCUPIED_STAGING" and body["manifest"] == "REFERENCE":
+        return slot == 1 and body["cut"] != "J0"
+    if body["family"] == "WRAPPER_ERROR":
+        terminal_slot = {
+            "FILE_FSYNC_EIO": 3,
+            "REPLACE_EIO": 4,
+            "DIRECTORY_FSYNC_EIO": 5,
+        }[body["injection"]]
+        return slot <= terminal_slot
+    if body["cut"] == "NORMAL":
+        return True
+    return int(body["cut"][1:]) >= slot
+
+
+def fact(
+    operation: str,
+    expectation: str,
+    *,
+    configured_source: str,
+    errno: str = "NONE",
+    sources: tuple[str, ...] = ("INDEPENDENT_TRACE", "MECHANISM_MANIFEST", "SELF_REPORT"),
+) -> dict[str, Any]:
+    if operation not in OPERATION_ORDER or expectation not in OPERATION_EXPECTATIONS \
+            or errno not in ERRNO_COORDINATES or configured_source not in CONFIGURED_SOURCES:
+        raise ValueError((operation, expectation, configured_source, errno))
+    if not sources or not set(sources) <= set(EVIDENCE_SOURCES):
+        raise ValueError((operation, sources))
+    return {
+        "configured_source": configured_source,
+        "errno": errno,
+        "expectation": expectation,
+        "operation": operation,
+        "required_sources": sorted(sources),
+    }
+
+
+def filesystem_fact(
+    body: dict[str, Any],
+    operation: str,
+    *,
+    slot: int,
+    omitted_manifest: str,
+    simulated_injection: str,
+) -> dict[str, Any]:
+    configured_source = (
+        "MANIFEST_BRANCH"
+        if body["manifest"] == omitted_manifest
+        else "PUBLISHER_WRAPPER"
+        if body["injection"] == simulated_injection
+        else "PUBLISHER_KERNEL"
+    )
+    if not reached(body, slot):
+        return fact(operation, "NOT_REACHED", configured_source=configured_source)
+    if body["manifest"] == omitted_manifest:
+        return fact(operation, "OBSERVED_ABSENT", configured_source=configured_source)
+    if body["injection"] == simulated_injection:
+        return fact(
+            operation,
+            "SIMULATED_ERROR_WITHOUT_KERNEL_ENTRY",
+            configured_source=configured_source,
+            errno="EIO_5",
+        )
+    return fact(operation, "OBSERVED_SUCCESS", configured_source=configured_source)
+
+
+def default_source(operation: str) -> str:
+    return {
+        "ACQUIRE_EXCLUSIVE": "PUBLISHER_KERNEL",
+        "ACQUIRE_NONEXCLUSIVE": "PUBLISHER_KERNEL",
+        "FILE_FSYNC": "PUBLISHER_KERNEL",
+        "REPLACE": "PUBLISHER_KERNEL",
+        "DIRECTORY_FSYNC": "PUBLISHER_KERNEL",
+        "SELF_STOP_SIGNAL": "PUBLISHER_SELF_CUT",
+        "CAUSAL_KILL_SIGNAL": "STAGE_CONTROLLER",
+        "PUBLISHER_TERMINATION_OBSERVATION": "LIFECYCLE_SUPERVISOR",
+        "EXACT_PUBLISHER_REAP": "PARENT_WAIT",
+        "RECOVERY_EXEC": "RECOVERY_LAUNCHER",
+    }[operation]
+
+
+def operation_expectations(body: dict[str, Any]) -> list[dict[str, Any]]:
+    if body["history_production"] == "RECOVERY_ONLY":
+        values = [
+            fact(
+                name,
+                "NOT_APPLICABLE",
+                configured_source=default_source(name),
+                sources=("SEMANTIC_DESCRIPTOR",),
+            )
+            for name in OPERATION_ORDER[:-1]
+        ]
+        values.append(
+            fact(
+                "RECOVERY_EXEC",
+                "OBSERVED_SUCCESS",
+                configured_source="RECOVERY_LAUNCHER",
+                sources=("EXACT_PROCESS_IDENTITY", "EXEC_RECORD", "INDEPENDENT_TRACE"),
+            )
+        )
+        return values
+
+    control_unavailable = (
+        body["manifest"] == "DROP_STAGE_CONTROLLER" and body["cut"] != "NORMAL"
+    )
+    if control_unavailable:
+        return [
+            fact(
+                name,
+                "CONTROL_UNAVAILABLE",
+                configured_source=default_source(name),
+                sources=("CONTROL_RECORD", "SEMANTIC_DESCRIPTOR"),
+            )
+            for name in OPERATION_ORDER
+        ]
+
+    acquisition_reached = reached(body, 1)
+    nonexclusive = body["manifest"] == "NO_EXCLUSIVE_CREATE"
+    occupied_reference = (
+        body["family"] == "OCCUPIED_STAGING"
+        and body["manifest"] == "REFERENCE"
+        and acquisition_reached
+    )
+    acquisition_selected = "ACQUIRE_NONEXCLUSIVE" if nonexclusive else "ACQUIRE_EXCLUSIVE"
+    acquisition_other = "ACQUIRE_EXCLUSIVE" if nonexclusive else "ACQUIRE_NONEXCLUSIVE"
+    if not acquisition_reached:
+        acquisition_value = fact(
+            acquisition_selected,
+            "NOT_REACHED",
+            configured_source="PUBLISHER_KERNEL",
+        )
+    elif occupied_reference:
+        acquisition_value = fact(
+            acquisition_selected,
+            "OBSERVED_KERNEL_ERROR",
+            configured_source="PUBLISHER_KERNEL",
+            errno="EEXIST_17",
+        )
+    else:
+        acquisition_value = fact(
+            acquisition_selected,
+            "OBSERVED_SUCCESS",
+            configured_source="PUBLISHER_KERNEL",
+        )
+    values = [
+        acquisition_value,
+        fact(
+            acquisition_other,
+            "NOT_SELECTED",
+            configured_source="MANIFEST_BRANCH",
+            sources=("MECHANISM_MANIFEST",),
+        ),
+        filesystem_fact(
+            body,
+            "FILE_FSYNC",
+            slot=3,
+            omitted_manifest="NO_FILE_FSYNC",
+            simulated_injection="FILE_FSYNC_EIO",
+        ),
+        filesystem_fact(
+            body,
+            "REPLACE",
+            slot=4,
+            omitted_manifest="NO_REPLACE",
+            simulated_injection="REPLACE_EIO",
+        ),
+        filesystem_fact(
+            body,
+            "DIRECTORY_FSYNC",
+            slot=5,
+            omitted_manifest="NO_DIRECTORY_FSYNC",
+            simulated_injection="DIRECTORY_FSYNC_EIO",
+        ),
+    ]
+    cut_reached = body["cut"].startswith("J") and body["cut_reachability"] == "REACHABLE"
+    self_cut = body["manifest"] == "SELF_CUT"
+    values.append(
+        fact(
+            "SELF_STOP_SIGNAL",
+            "OBSERVED_SUCCESS" if self_cut and cut_reached else "NOT_REACHED" if self_cut else "NOT_SELECTED",
+            configured_source="PUBLISHER_SELF_CUT" if self_cut else "MANIFEST_BRANCH",
+            sources=("CONTROL_RECORD", "EXACT_PROCESS_IDENTITY", "INDEPENDENT_TRACE"),
+        )
+    )
+    values.append(
+        fact(
+            "CAUSAL_KILL_SIGNAL",
+            "OBSERVED_SUCCESS" if cut_reached else "NOT_REACHED",
+            configured_source="LIFECYCLE_SUPERVISOR" if self_cut else "STAGE_CONTROLLER",
+            sources=("CONTROL_RECORD", "EXACT_PROCESS_IDENTITY", "INDEPENDENT_TRACE"),
+        )
+    )
+    values.append(
+        fact(
+            "PUBLISHER_TERMINATION_OBSERVATION",
+            "OBSERVED_SUCCESS",
+            configured_source=(
+                "PIDFD_PROC_OBSERVER"
+                if body["manifest"] == "NO_PRE_RECOVERY_REAP_BEHAVIORAL" and cut_reached
+                else "LIFECYCLE_SUPERVISOR"
+            ),
+            sources=("EXACT_PROCESS_IDENTITY", "INDEPENDENT_TRACE", "TERMINATION_RECORD"),
+        )
+    )
+    values.append(
+        fact(
+            "EXACT_PUBLISHER_REAP",
+            "OBSERVED_SUCCESS",
+            configured_source="PARENT_WAIT",
+            sources=("EXACT_PROCESS_IDENTITY", "INDEPENDENT_TRACE", "WAIT_RECORD"),
+        )
+    )
+    values.append(
+        fact(
+            "RECOVERY_EXEC",
+            "OBSERVED_SUCCESS",
+            configured_source="RECOVERY_LAUNCHER",
+            sources=("EXACT_PROCESS_IDENTITY", "EXEC_RECORD", "INDEPENDENT_TRACE"),
+        )
+    )
+    return sorted(values, key=lambda item: OPERATION_ORDER.index(item["operation"]))
+
+
+def checkpoint_slots(body: dict[str, Any]) -> list[str]:
+    if body["history_production"] != "PUBLICATION":
+        return []
+    if body["manifest"] == "DROP_STAGE_CONTROLLER" and body["cut"] != "NORMAL":
+        return []
+    if body["family"] == "OCCUPIED_STAGING" and body["manifest"] == "REFERENCE" \
+            and body["cut"] != "J0":
+        return ["J0"]
+    if body["family"] == "WRAPPER_ERROR":
+        last = {"FILE_FSYNC_EIO": 2, "REPLACE_EIO": 3, "DIRECTORY_FSYNC_EIO": 4}[body["injection"]]
+    elif body["cut"] == "NORMAL":
+        last = 5
+    else:
+        last = int(body["cut"][1:])
+    return [f"J{slot}" for slot in range(last + 1)]
+
+
+def status_coordinates(body: dict[str, Any]) -> dict[str, Any]:
+    control_unavailable = (
+        body["manifest"] == "DROP_STAGE_CONTROLLER" and body["cut"] != "NORMAL"
+    )
+    reaping_unknown = body["manifest"] == "NO_PRE_RECOVERY_REAP_BEHAVIORAL"
+    scopes = ["L_EVIDENCE", "GUEST_REALIZATION"]
+    if body["cut"].startswith("J"):
+        scopes.append("B_PROCESS_KILL")
+    scopes.sort(key=STATUS_ENUMS["scope"].index)
+    needed: list[str] = []
+    if control_unavailable:
+        needed.append("CUT_CONTINUATION_WITHOUT_STAGE_CONTROLLER")
+    if reaping_unknown:
+        needed.append("PASSIVE_REAP_OBSERVER_WITH_FROZEN_SEMANTICS")
+    return {
+        "applicability": "APPLICABLE",
+        "behavioral_comparison": "NOT_COMPARED",
+        "execution": "CONTROL_UNAVAILABLE" if control_unavailable else "COMPLETE",
+        "failure_reasons": [],
+        "full_conformance": "UNKNOWN" if control_unavailable or reaping_unknown else "PASS",
+        "needed_evidence": sorted(needed),
+        "oracle": "ASSERTED",
+        "scope": scopes,
+    }
 
 
 def publication_oracle(body: dict[str, Any]) -> dict[str, Any]:
@@ -189,33 +479,243 @@ def record_fault_oracle(body: dict[str, Any]) -> dict[str, Any]:
 
 def expected_for(body: dict[str, Any]) -> dict[str, Any]:
     if body["family"] == "RECORD_FAULT":
-        return record_fault_oracle(body)
-    return publication_oracle(body)
+        expected = record_fault_oracle(body)
+    else:
+        expected = publication_oracle(body)
+    expected.pop("execution_applicability")
+    publish_result = expected.pop("expected_publish_result_hex")
+    recovery_observation = expected.pop("expected_recovery_hex")
+    control_unavailable = (
+        body["manifest"] == "DROP_STAGE_CONTROLLER" and body["cut"] != "NORMAL"
+    )
+    if control_unavailable:
+        if publish_result != NO_CROSSING or recovery_observation != NO_OBSERVATION:
+            raise ValueError("control-unavailable oracle fabricated a B observation")
+        b_expectation = {
+            "kind": "NO_B_HISTORY",
+            "reason": "CONTROL_UNAVAILABLE",
+        }
+    else:
+        if recovery_observation == NO_OBSERVATION:
+            raise ValueError("executed subject row lacks a recovery observation")
+        b_expectation = {
+            "history_production": body["history_production"],
+            "kind": "EXACT",
+            "publish_result_hex_list": (
+                [] if publish_result == NO_CROSSING else [publish_result]
+            ),
+            "recovery_observation_hex": recovery_observation,
+        }
+    expected.update(
+        {
+            "b_expectation": b_expectation,
+            "cut_reachability": body["cut_reachability"],
+            "expected_checkpoint_slots": checkpoint_slots(body),
+            "operation_expectations": operation_expectations(body),
+            "status_coordinates": status_coordinates(body),
+        }
+    )
+    return expected
+
+
+def comparison_key(body: dict[str, Any], ignored: set[str]) -> bytes:
+    return canonical_json({key: value for key, value in body.items() if key not in ignored})
+
+
+def expected_edge_result(
+    left_expected: dict[str, Any], right_expected: dict[str, Any]
+) -> str:
+    if "NO_B_HISTORY" in {
+        left_expected["b_expectation"]["kind"],
+        right_expected["b_expectation"]["kind"],
+    }:
+        return "UNKNOWN"
+    left_response = left_expected["b_expectation"]
+    right_response = right_expected["b_expectation"]
+    return "MATCH" if left_response == right_response else "DIFFER"
+
+
+def build_comparison_edges(
+    row_work: list[dict[str, Any]],
+) -> tuple[list[dict[str, Any]], dict[str, list[str]], dict[str, list[str]]]:
+    by_case = {row["case_id"]: row for row in row_work}
+    cross_backend: dict[bytes, list[dict[str, Any]]] = {}
+    reference_index: dict[bytes, list[dict[str, Any]]] = {}
+    for row in row_work:
+        body = row["body"]
+        cross_backend.setdefault(comparison_key(body, {"backend"}), []).append(row)
+        if body["manifest"] == "REFERENCE":
+            normalized = dict(body)
+            normalized["comparison_rules"] = []
+            normalized.pop("cut_reachability")
+            reference_index.setdefault(canonical_json(normalized), []).append(row)
+
+    edge_work: dict[str, dict[str, Any]] = {}
+    incident: dict[str, list[str]] = {case_id: [] for case_id in by_case}
+    incident_results: dict[str, list[str]] = {case_id: [] for case_id in by_case}
+
+    def add(left: dict[str, Any], right: dict[str, Any], relation: str) -> None:
+        left_id, right_id = sorted((left["case_id"], right["case_id"]))
+        identity = {
+            "left_case_id": left_id,
+            "relation": relation,
+            "right_case_id": right_id,
+            "scope": "B_RESPONSE_EQUALITY",
+        }
+        edge_id = "r01b-edge-" + hashlib.sha256(EDGE_TAG + tv(identity)).hexdigest()
+        result = expected_edge_result(by_case[left_id]["expected"], by_case[right_id]["expected"])
+        edge = {
+            "edge_id": edge_id,
+            "expected_result": result,
+            "identity": identity,
+            "smallest_witness_order": [
+                "crossing_count",
+                "input_bytes",
+                "cut_ordinal",
+                "fault_ordinal",
+                "canonical_record_unsigned_lex",
+            ],
+        }
+        previous = edge_work.setdefault(edge_id, edge)
+        if previous != edge:
+            raise ValueError("comparison edge-id collision")
+        for case_id in (left_id, right_id):
+            if edge_id not in incident[case_id]:
+                incident[case_id].append(edge_id)
+                incident_results[case_id].append(result)
+
+    for group in cross_backend.values():
+        if len(group) != 2 or {row["body"]["backend"] for row in group} != {"E", "T"}:
+            raise ValueError("cross-backend comparison group is not an exact pair")
+        add(group[0], group[1], "CROSS_BACKEND_SAME_SYMBOLIC_ROW")
+
+    for row in row_work:
+        body = row["body"]
+        if "PAIR_REFERENCE_SAME_BACKEND" not in body["comparison_rules"]:
+            continue
+        normalized = dict(body)
+        normalized["manifest"] = "REFERENCE"
+        normalized["comparison_rules"] = []
+        normalized.pop("cut_reachability")
+        if normalized["family"] == "STAGE_CONTROL":
+            normalized["family"] = "CLEAN_MECHANISM"
+        candidates = reference_index.get(canonical_json(normalized), [])
+        if len(candidates) != 1:
+            raise ValueError(f"reference comparison is not unique: {row['case_id']}")
+        add(row, candidates[0], "PAIR_REFERENCE_SAME_BACKEND")
+
+    for case_id in incident:
+        incident[case_id].sort()
+    edges = sorted(edge_work.values(), key=lambda edge: edge["edge_id"])
+    return edges, incident, incident_results
+
+
+def aggregate_behavior(results: list[str]) -> str:
+    if "DIFFER" in results:
+        return "DIFFER"
+    if "UNKNOWN" in results:
+        return "UNKNOWN"
+    if results:
+        return "MATCH"
+    return "NOT_COMPARED"
+
+
+def descriptor_view(item: dict[str, Any]) -> dict[str, Any]:
+    """Independent V2 symbolic-row projection used only by the oracle."""
+    identity = item["identity"]
+    metadata = item["metadata"]
+    view: dict[str, Any] = {
+        "backend": identity["backend"],
+        "comparison_rules": metadata["comparison_rules"],
+        "continuation_hex": identity["continuation_hex"],
+        "cut_reachability": metadata["cut_reachability"],
+        "family": metadata["family"],
+        "history_production": identity["history_production"],
+        "manifest": identity["mechanism_manifest"],
+        "observer_profile": identity["observer_profile"],
+        "origin": metadata["origin"],
+        "repetition": identity["repetition"],
+    }
+    if identity["history_production"] == "PUBLICATION":
+        setup = identity["setup"]
+        view.update(
+            {
+                "base_record_payload_hex": "",
+                "case": "CREATE" if setup.startswith("ABSENT") else "UPDATE",
+                "cut": identity["cut"],
+                "injection": identity["injected_fault"],
+                "mutation": "NONE",
+                "mutation_arg0": -1,
+                "mutation_arg1": -1,
+                "mutation_target_payload_hex": "",
+                "publish_payload_hex": identity["requested_payload_hex"],
+                "setup": setup,
+            }
+        )
+    elif identity["history_production"] == "RECOVERY_ONLY":
+        recipe = identity["recovery_fixture_recipe"]
+        view.update(
+            {
+                "base_record_payload_hex": recipe["base_record_payload_hex"],
+                "case": "RECOVERY_ONLY",
+                "cut": "RECOVERY_ONLY",
+                "injection": "NONE",
+                "mutation": recipe["mutation"],
+                "mutation_arg0": recipe["arg0"],
+                "mutation_arg1": recipe["arg1"],
+                "mutation_target_payload_hex": recipe["target_payload_hex"],
+                "publish_payload_hex": "",
+                "setup": "INSTALLED_MUTATED_RECORD",
+            }
+        )
+    else:
+        raise ValueError(identity["history_production"])
+    return view
 
 
 def build_oracle(descriptor_package: dict[str, Any]) -> dict[str, Any]:
-    if descriptor_package.get("schema_id") != "R01B-SYMBOLIC-DESCRIPTORS-1":
+    if descriptor_package.get("schema_id") != "R01B-SYMBOLIC-DESCRIPTORS-2":
         raise ValueError("wrong descriptor schema")
-    rows: list[dict[str, Any]] = []
+    row_work: list[dict[str, Any]] = []
     previous = ""
     for case_ordinal, item in enumerate(descriptor_package["rows"]):
-        body = item["body"]
-        case_id = "r01b-case-" + hashlib.sha256(CASE_TAG + tv(body)).hexdigest()
+        body = descriptor_view(item)
+        case_id = "r01b-case-" + hashlib.sha256(
+            CASE_TAG + tv(item["identity"])
+        ).hexdigest()
         if case_id != item["case_id"] or case_ordinal != item["case_ordinal"]:
             raise ValueError("descriptor identity mismatch")
         if previous and case_id <= previous:
             raise ValueError("descriptor order mismatch")
         previous = case_id
-        rows.append(
+        row_work.append(
             {
+                "body": body,
                 "case_id": case_id,
                 "case_ordinal": case_ordinal,
                 "expected": expected_for(body),
             }
         )
-    if len(rows) != 3028:
-        raise AssertionError(len(rows))
+    if len(row_work) != 3028:
+        raise AssertionError(len(row_work))
+    edges, incident, incident_results = build_comparison_edges(row_work)
+    rows: list[dict[str, Any]] = []
+    for row in row_work:
+        case_id = row["case_id"]
+        expected = row["expected"]
+        expected["comparison_edge_ids"] = incident[case_id]
+        expected["status_coordinates"]["behavioral_comparison"] = aggregate_behavior(
+            incident_results[case_id]
+        )
+        rows.append(
+            {
+                "case_id": case_id,
+                "expected": expected,
+            }
+        )
     return {
+        "comparison_edge_count": len(edges),
+        "comparison_edges": edges,
         "descriptor_stream_sha256": hashlib.sha256(
             canonical_json(descriptor_package)
         ).hexdigest(),
@@ -225,7 +725,11 @@ def build_oracle(descriptor_package: dict[str, Any]) -> dict[str, Any]:
         ),
         "row_count": len(rows),
         "rows": rows,
-        "schema_id": "R01B-LITERAL-ORACLE-1",
+        "schema_id": "R01B-LITERAL-ORACLE-2",
+        "status_registry_source": {
+            "schema_id": STATUS_REGISTRY["schema_id"],
+            "sha256": STATUS_REGISTRY_SHA256,
+        },
     }
 
 

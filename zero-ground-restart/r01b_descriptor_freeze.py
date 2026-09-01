@@ -23,7 +23,7 @@ CLEAN_MANIFESTS = (
     "NO_PRE_RECOVERY_REAP_BEHAVIORAL",
 )
 CASE_TAG = b"ZGR01B-CASE\x00"
-SCHEMA_ID = "R01B-SYMBOLIC-DESCRIPTORS-1"
+SCHEMA_ID = "R01B-SYMBOLIC-DESCRIPTORS-2"
 
 
 def canonical_json(value: Any) -> bytes:
@@ -82,6 +82,7 @@ def clean_case(case: str) -> tuple[str, str]:
 def blank_descriptor(**updates: Any) -> dict[str, Any]:
     descriptor: dict[str, Any] = {
         "backend": "",
+        "backend_applicability": "APPLICABLE",
         "base_record_payload_hex": "",
         "base_record_present": False,
         "case": "",
@@ -92,6 +93,7 @@ def blank_descriptor(**updates: Any) -> dict[str, Any]:
         "history_production": "",
         "injection": "NONE",
         "manifest": "REFERENCE",
+        "manifest_applicability": "APPLICABLE",
         "mutation": "NONE",
         "mutation_arg0": -1,
         "mutation_arg1": -1,
@@ -102,10 +104,12 @@ def blank_descriptor(**updates: Any) -> dict[str, Any]:
         "repetition": 0,
         "semantic_profile": "R01B",
         "setup": "",
+        "cut_reachability": "",
     }
     descriptor.update(updates)
     if set(descriptor) != {
         "backend",
+        "backend_applicability",
         "base_record_payload_hex",
         "base_record_present",
         "case",
@@ -116,6 +120,7 @@ def blank_descriptor(**updates: Any) -> dict[str, Any]:
         "history_production",
         "injection",
         "manifest",
+        "manifest_applicability",
         "mutation",
         "mutation_arg0",
         "mutation_arg1",
@@ -126,9 +131,128 @@ def blank_descriptor(**updates: Any) -> dict[str, Any]:
         "repetition",
         "semantic_profile",
         "setup",
+        "cut_reachability",
     }:
         raise AssertionError("descriptor key drift")
     return descriptor
+
+
+def materialize_reachability(descriptor: dict[str, Any]) -> None:
+    """Freeze descriptor-domain applicability without importing an oracle.
+
+    This says whether the requested control position can be reached under the
+    declared fixture and mechanism.  It does not predict recovery bytes or a
+    conformance verdict.
+    """
+    if descriptor["history_production"] == "RECOVERY_ONLY":
+        value = "NOT_APPLICABLE"
+    elif descriptor["manifest"] == "DROP_STAGE_CONTROLLER" \
+            and descriptor["cut"] != "NORMAL":
+        value = "CONTROL_UNAVAILABLE"
+    elif descriptor["family"] == "OCCUPIED_STAGING" \
+            and descriptor["manifest"] == "REFERENCE" \
+            and descriptor["cut"] != "J0":
+        value = "TERMINATES_BEFORE_REQUESTED_POSITION"
+    elif descriptor["family"] == "WRAPPER_ERROR":
+        value = "EXPECTED_ERROR_TERMINAL"
+    elif descriptor["cut"] == "NORMAL":
+        value = "EXPECTED_TERMINAL"
+    else:
+        value = "REACHABLE"
+    descriptor["cut_reachability"] = value
+
+
+def identity_body(descriptor: dict[str, Any]) -> dict[str, Any]:
+    """Return exactly the symbolic values that will cross L before overlays."""
+    common = {
+        "backend": descriptor["backend"],
+        "continuation_hex": descriptor["continuation_hex"],
+        "history_production": descriptor["history_production"],
+        "mechanism_manifest": descriptor["manifest"],
+        "observer_profile": "ACTIVE_PTRACE_V1",
+        "repetition": descriptor["repetition"],
+    }
+    if descriptor["history_production"] == "PUBLICATION":
+        common.update(
+            {
+                "cut": descriptor["cut"],
+                "injected_fault": descriptor["injection"],
+                "requested_payload_hex": descriptor["publish_payload_hex"],
+                "setup": descriptor["setup"],
+            }
+        )
+        return common
+    if descriptor["history_production"] == "RECOVERY_ONLY":
+        common["recovery_fixture_recipe"] = {
+            "arg0": descriptor["mutation_arg0"],
+            "arg1": descriptor["mutation_arg1"],
+            "base_record_payload_hex": descriptor["base_record_payload_hex"],
+            "mutation": descriptor["mutation"],
+            "target_payload_hex": descriptor["mutation_target_payload_hex"],
+        }
+        return common
+    raise ValueError(descriptor["history_production"])
+
+
+def registry_metadata(descriptor: dict[str, Any]) -> dict[str, Any]:
+    """Materialize rebuildable domain metadata outside case identity."""
+    return {
+        "comparison_rules": descriptor["comparison_rules"],
+        "cut_reachability": descriptor["cut_reachability"],
+        "family": descriptor["family"],
+        "origin": descriptor["origin"],
+    }
+
+
+def row_view(row: dict[str, Any]) -> dict[str, Any]:
+    """Rebuild the internal oracle/test view from one emitted V2 row."""
+    identity = row["identity"]
+    metadata = row["metadata"]
+    view: dict[str, Any] = {
+        "backend": identity["backend"],
+        "comparison_rules": metadata["comparison_rules"],
+        "continuation_hex": identity["continuation_hex"],
+        "cut_reachability": metadata["cut_reachability"],
+        "family": metadata["family"],
+        "history_production": identity["history_production"],
+        "manifest": identity["mechanism_manifest"],
+        "observer_profile": identity["observer_profile"],
+        "origin": metadata["origin"],
+        "repetition": identity["repetition"],
+    }
+    if identity["history_production"] == "PUBLICATION":
+        setup = identity["setup"]
+        view.update(
+            {
+                "base_record_payload_hex": "",
+                "case": "CREATE" if setup.startswith("ABSENT") else "UPDATE",
+                "cut": identity["cut"],
+                "injection": identity["injected_fault"],
+                "mutation": "NONE",
+                "mutation_arg0": -1,
+                "mutation_arg1": -1,
+                "mutation_target_payload_hex": "",
+                "publish_payload_hex": identity["requested_payload_hex"],
+                "setup": setup,
+            }
+        )
+    else:
+        recipe = identity["recovery_fixture_recipe"]
+        view.update(
+            {
+                "base_record_payload_hex": recipe["base_record_payload_hex"],
+                "case": "RECOVERY_ONLY",
+                "cut": "RECOVERY_ONLY",
+                "injection": "NONE",
+                "mutation": recipe["mutation"],
+                "mutation_arg0": recipe["arg0"],
+                "mutation_arg1": recipe["arg1"],
+                "mutation_target_payload_hex": recipe["target_payload_hex"],
+                "publish_payload_hex": "",
+                "setup": "INSTALLED_MUTATED_RECORD",
+            }
+        )
+    return view
 
 
 def publication_descriptor(
@@ -465,20 +589,29 @@ def build_package() -> dict[str, Any]:
     enumerate_record_faults(bodies)
     if len(bodies) != 3028:
         raise AssertionError(f"unexpected descriptor total: {len(bodies)}")
-
-    identified: list[tuple[str, dict[str, Any]]] = []
     for body in bodies:
-        case_id = "r01b-case-" + hashlib.sha256(CASE_TAG + tv(body)).hexdigest()
-        identified.append((case_id, body))
+        materialize_reachability(body)
+
+    identified: list[tuple[str, dict[str, Any], dict[str, Any]]] = []
+    for descriptor in bodies:
+        identity = identity_body(descriptor)
+        metadata = registry_metadata(descriptor)
+        case_id = "r01b-case-" + hashlib.sha256(CASE_TAG + tv(identity)).hexdigest()
+        identified.append((case_id, identity, metadata))
     identified.sort(key=lambda item: item[0].encode("ascii"))
     if len({item[0] for item in identified}) != len(identified):
-        raise AssertionError("case-id collision")
+        raise AssertionError("boundary-identical symbolic rows were not merged")
 
     rows = [
-        {"body": body, "case_id": case_id, "case_ordinal": ordinal}
-        for ordinal, (case_id, body) in enumerate(identified)
+        {
+            "case_id": case_id,
+            "case_ordinal": ordinal,
+            "identity": identity,
+            "metadata": metadata,
+        }
+        for ordinal, (case_id, identity, metadata) in enumerate(identified)
     ]
-    counts = dict(sorted(Counter(row["body"]["family"] for row in rows).items()))
+    counts = dict(sorted(Counter(row["metadata"]["family"] for row in rows).items()))
     expected_counts = {
         "CLEAN_MECHANISM": 456,
         "OCCUPIED_STAGING": 112,
@@ -489,11 +622,20 @@ def build_package() -> dict[str, Any]:
     if counts != expected_counts:
         raise AssertionError((counts, expected_counts))
     return {
+        "applicability": {
+            "backend_domain": list(BACKENDS),
+            "backend_status": "APPLICABLE",
+            "manifest_domain": sorted(
+                {row["identity"]["mechanism_manifest"] for row in rows}
+            ),
+            "manifest_status": "APPLICABLE",
+        },
         "counts_by_family": counts,
         "row_count": len(rows),
         "rows": rows,
         "schema_id": SCHEMA_ID,
-        "case_id_rule": "ASCII(r01b-case-)||lowerhex(sha256(ASCII(ZGR01B-CASE)||00||TV(body)))",
+        "semantic_profile": "R01B_ACTIVE_PTRACE_V1",
+        "case_id_rule": "ASCII(r01b-case-)||lowerhex(sha256(ASCII(ZGR01B-CASE)||00||TV(identity)))",
     }
 
 
