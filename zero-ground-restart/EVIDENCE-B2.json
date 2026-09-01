@@ -118,13 +118,13 @@
       "corpus_class_payload_total_bytes": 99075,
       "corpus_classes": {
         "max": 115,
-        "median": 88,
+        "median": 88.0,
         "min": 0
       },
       "full_class_payload_total_bytes": 14584671,
       "full_class_universe": {
         "max": 236,
-        "median": 181,
+        "median": 181.0,
         "min": 0
       }
     },

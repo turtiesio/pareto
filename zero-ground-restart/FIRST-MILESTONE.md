@@ -48,9 +48,9 @@ for next-crossing-domain membership, never unrecorded physical response frames.
 ## Executed scope
 
 The deterministic B2 evidence file has SHA-256
-`12bfedbf22edbbda1b895073e46e773c2758b23a974c68321351aa15a6d8ff49`.
+`0e26e4b30a635f17db4508c1637153b841b8c36e66ba26dfad8b31a09e7e20b9`.
 The deterministic B3 fresh-process evidence file has SHA-256
-`828a794a1ffa7c40e30c24ba1ba2f0452353209b292d9ec8ac20c294f1072fe3`.
+`d195a02eeb33b3680bd75d62fcd4ad040ecb28b83ca57f3ca948429e7cfe6ce3`.
 Its generated specification/table artifact digest is
 `b38fc5d3e57fd0117b9ee1fd4c0d0686833115db9ce22dd5950fe6fb41a09339`.
 
