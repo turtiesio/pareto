@@ -1,0 +1,221 @@
+{
+  "schema": "zero-ground-cross-runtime-evidence-r1-v1",
+  "date_utc": "2026-09-01",
+  "claim_boundary": {
+    "supported": "unlike-runtime/software portability for the frozen finite B1 contract between CPython 3.12.3 and an independently authored Rust 1.98.0 implementation on one x86-64 Linux guest",
+    "not_supported": [
+      "unlike physical realization",
+      "unlike host, kernel, architecture, or physical medium",
+      "power-loss durability or cold recovery",
+      "fresh values, concurrency, time, authority, privacy, or class-splitting evolution"
+    ],
+    "implementation_is_falsification_instrument": true
+  },
+  "frozen_semantic_target": {
+    "artifact_digest": "b38fc5d3e57fd0117b9ee1fd4c0d0686833115db9ce22dd5950fe6fb41a09339",
+    "reachable_boundary_cut_states": 83352,
+    "quiescent_states": 10420,
+    "boundary_classes": 82584,
+    "operations_per_class": 17,
+    "one_step_records_per_candidate": 1403928
+  },
+  "candidates": {
+    "ordinal": {
+      "state_records": 82584,
+      "state_stream_bytes": 3716290,
+      "state_stream_sha256": "253cb73a89dce87bee4ed1c5c4bc22eddffbd848e3a805037d00fd71c16740ec",
+      "transition_records": 1403928,
+      "transition_transcript_bytes_if_emitted": 201276822,
+      "transition_sha256": "293cca6b94d8dd0e727c6ecf9d55ac0aac0dae8707a365206bf762049056aaa3",
+      "producer_files_byte_identical": true
+    },
+    "representative": {
+      "state_records": 82584,
+      "state_stream_bytes": 18053209,
+      "state_stream_sha256": "5aa508e648df5a43fd6cea5ff0552daed5faa1e9903e6841e3fde657755ef2f5",
+      "representative_payload_bytes": {
+        "minimum": 0,
+        "maximum": 236,
+        "total": 14584671
+      },
+      "transition_records": 1403928,
+      "transition_transcript_bytes_if_emitted": 688933016,
+      "transition_sha256": "4ff1ba87a2f2f30bc1c93678e9d00a61aa3ce37a4b3dd04e65052a976b62dec6",
+      "producer_files_byte_identical": true
+    }
+  },
+  "bidirectional_exchange": {
+    "execution_order": [
+      "Python producer exits; Rust consumer starts",
+      "Rust producer exits; Python consumer starts"
+    ],
+    "candidate_directions_checked": 4,
+    "all_recovered_unique_classes_per_direction": 82584,
+    "all_transition_counts_exact": true,
+    "all_state_stream_hashes_exact": true,
+    "all_transition_hashes_exact": true,
+    "python_and_rust_stream_bytes_cmp_equal": true,
+    "originating_snapshots_or_class_keys_supplied": false,
+    "same_host_and_filesystem": true,
+    "isolation_limitations": [
+      "the manual R1 exchange used one working tree and ordinary /tmp files",
+      "no mount, network, syscall, or architecture isolation",
+      "the language runtimes share the kernel, libc boundary, filesystem, CPU, and external expected digests"
+    ]
+  },
+  "held_out_breaker": {
+    "schema": "zero-ground-cross-runtime-transport-breaker-v1",
+    "commitment_file": "RUNTIME-BREAKER-R0.commitment",
+    "canonical_json_bytes": 13666,
+    "canonical_json_sha256": "85741dda1ed537ef5225a1514d0947d277f4ee552b5234ea038fb6c8551e2e97",
+    "first_unmodified_run": {
+      "test_methods_passed_under_runner_semantic_assertions": 3,
+      "test_methods_failed": 0,
+      "wall_seconds": 31.582,
+      "expanded_mandatory_cases_per_runtime": 70,
+      "runtime_checks": 140,
+      "accept_checks": 10,
+      "reject_checks": 130,
+      "semantic_failures": 0,
+      "strict_committed_category_conformance": {
+        "verdict": "FAIL",
+        "passes": 119,
+        "checks": 140,
+        "category_mismatches": 21,
+        "reason": "the committed breaker object calls expect.code a portable category, but the first runner treated category spelling and transport-versus-recovery phase as advisory"
+      },
+      "proper_prefix_lengths_per_runtime": "0 through 44 inclusive",
+      "environment_logical_checks": 30,
+      "environment_fresh_process_probes_beyond_C_baseline": 20,
+      "environment_failures": 0,
+      "exact_transition_comparisons": 85,
+      "transition_probe_ranks": [0, 1, 4, 66051, 82583],
+      "coherent_rank_0_to_1_substitution_accepted": true,
+      "coherent_substitution_divergent_resume_proved": true,
+      "diagnostic_category_only_differences": {
+        "total": 21,
+        "python": 6,
+        "rust": 15,
+        "semantic_status": "outside B1 observation equality, so B1 semantics still match; nevertheless a strict failure of the stronger committed breaker category contract"
+      }
+    },
+    "optional_publication_profiles": {
+      "conditional_cases": 5,
+      "profiles_claimed": 0,
+      "verdict": "UNSUPPORTED_BY_B1_B3"
+    },
+    "interface_limitation": "the frozen CLI has no per-envelope structured recovery command; the held-out runner linked a temporary unmodified harness to the public Rust library API; transport-versus-recovery phase and portable diagnostic categories are therefore unsupported"
+  },
+  "verification": {
+    "python_r0_focused_tests": {
+      "passed": 18,
+      "failed": 0,
+      "independent_root_rerun_wall_seconds": 13.406
+    },
+    "rust_focused_tests": {
+      "passed": 6,
+      "failed": 0,
+      "ignored_exhaustive_tests": 1,
+      "independent_root_rerun_wall_seconds": 20.37
+    },
+    "rust_exhaustive_transition_test": {
+      "passed": 1,
+      "failed": 0,
+      "release_wall_seconds": 6.91
+    },
+    "rust_clippy_warnings_as_errors": "PASS",
+    "rust_format_check": "PASS"
+  },
+  "runtime_measurements": {
+    "samples_per_role_candidate_runtime": 1,
+    "warning": "single local samples are nondeterministic measurements and do not establish performance dominance",
+    "python": {
+      "implementation": "CPython 3.12.3",
+      "produce_ordinal": {"wall_seconds": 10.91, "max_rss_kib": 223508},
+      "consume_rust_ordinal": {"wall_seconds": 19.71, "max_rss_kib": 230772},
+      "produce_representative": {"wall_seconds": 13.25, "max_rss_kib": 238424},
+      "consume_rust_representative": {"wall_seconds": 24.34, "max_rss_kib": 259840}
+    },
+    "rust": {
+      "compiler_runtime": "rustc 1.98.0 (88d9e12ae, LLVM 22.1.8)",
+      "consume_python_ordinal": {"wall_seconds": 3.70, "max_rss_kib": 259876},
+      "produce_ordinal": {"wall_seconds": 2.29, "max_rss_kib": 259748},
+      "consume_python_representative": {"wall_seconds": 5.54, "max_rss_kib": 259876},
+      "produce_representative": {"wall_seconds": 2.49, "max_rss_kib": 259748}
+    }
+  },
+  "rust_artifact_inventory": {
+    "std_only_no_external_crates": true,
+    "source_and_document_files": 6,
+    "source_and_document_bytes": 56207,
+    "source_and_document_physical_lines": 1687,
+    "binary_measurement_command": "cargo build --release --locked; sha256sum/stat target/release/b1-realizer; du -sb target/release target",
+    "binary_measurement_time_utc": "2026-09-01 14:55:24",
+    "release_binary_bytes": 646312,
+    "release_binary_sha256": "04671705ec2ccd951fd0e3ac586fa0bea5fc916fa69f677108cd3a2f710b6d9c",
+    "release_directory_bytes": 4134006,
+    "full_build_directory_bytes": 75804006,
+    "dynamic_dependencies": ["Linux loader", "glibc", "libgcc_s"],
+    "files": [
+      {"name": "Cargo.toml", "bytes": 314, "sha256": "8291bdff42ef4b84c3ba5511a2912f069275f36915d513d1076acfb966f88682"},
+      {"name": "Cargo.lock", "bytes": 160, "sha256": "b2b15e6799fc9107fa6307b71d6b474d2f5d39b7e013e422032a63349c58769e"},
+      {"name": "src/lib.rs", "bytes": 46839, "sha256": "be30147b216cfd7614800fa336efc33f2af1864a75b0070e39561c91244d3eb2"},
+      {"name": "src/main.rs", "bytes": 4718, "sha256": "830fb800b7f406e3cd41716840404a9de4c53fcb7c3069bc117c73316220daf3"},
+      {"name": "README.md", "bytes": 1257, "sha256": "d7341b9b5b212b1157bdb791f6cdd3f3696bb008be47b5bbecdca1088bcd8ea5"},
+      {"name": "INDEPENDENCE.md", "bytes": 2919, "sha256": "0e76d8b06e8a53c4ff0ce1cdbda6e235ba7679596e37b790ec8fc982f5b83739"}
+    ]
+  },
+  "non_scalar_dimensions": {
+    "information_distinction_preservation": "PASS for every frozen B1 class and one-step operation in both runtime directions; arbitrary fresh futures remain unsupported",
+    "persistent_state": "unchanged B1 quotient responsibility: 3-byte ordinal payload or 0-236 representative bytes plus the B3 envelope; the Rust implementation adds no per-instance semantic state",
+    "semantic_machinery": "independent Rust machine, quotient refinement, canonicalizer, codecs, local SHA-256, late exact wire amendment, compiler and verifier are charged",
+    "human_cognition": "UNKNOWN: no participant task or study; opaque ordinal still requires tooling and representative still risks synthetic-history confusion",
+    "authoring_burden": "Rust adds 56,207 source/document bytes and 1,687 physical lines; manual decisions and human error rate remain UNKNOWN",
+    "query_navigation_burden": "no search/navigation infrastructure; exhaustive verification rebuilds and scans all classes, while per-state deployed lookup cost depends on the chosen candidate",
+    "runtime": "see single-sample measurements; Rust was faster locally but used comparable or higher peak RSS, and no dominance is claimed",
+    "storage": "the measured 646,312-byte release binary, dynamic libraries, source/rebuild toolchain, test streams, and optional transcript bytes are charged separately; total deployment storage remains UNKNOWN",
+    "operations": "eight ordered producer/consumer roles plus external verification were exercised; build, exact format coordination, bundle selection, temporary-file handling, and migration remain operational responsibilities",
+    "trusted_computing_base": "common B1 contract, artifact identity, wire amendment, SHA-256 assumption, external comparator, Linux kernel/filesystem/CPU; Python side adds CPython/stdlib and Python sources, Rust side adds Rust source/compiler provenance, generated binary, glibc and libgcc_s",
+    "evolution": "unchanged: an observer that factors through the old quotient can rebuild; the known prior-history class split cannot migrate from either runtime encoding",
+    "portability": "PASS only for CPython-to-Rust software exchange on one x86-64 Linux guest; other architectures, OSes, hosts, and physical media are UNTESTED/UNKNOWN",
+    "explainability": "exact failing envelope, rank, operation, expected/actual bytes, and transition hash are available; the committed portable diagnostic-category contract fails 21/140 checks and human comprehension remains UNKNOWN",
+    "information_loss_risk": "held-out malformed cases had zero semantic false accepts/rejects, but coherent valid rank substitution is undetectable without external integrity/freshness information; hash collisions, malicious replacement, physical faults, and wrong shared contract remain risks"
+  },
+  "responsibility_classification": {
+    "must_survive": [
+      "the frozen B1 future-behavior class; the runtime exchange creates no new history distinction",
+      "suite-identity selection somewhere in the total R0 system when wrong-suite rejection is required; only its redundant in-band copy may be omitted"
+    ],
+    "may_rebuild": [
+      "ordinal/representative maps, transitions, outputs, and canonical representatives from the exact B1 specification",
+      "the exact transition transcript from the late TRANSITION-WIRE-R1 byte specification",
+      "equivalent semantic machinery may be rebuilt or reimplemented from the identified specification and sources, with cost and TCB charged; bit-identical executable rebuild is UNKNOWN because reproducible builds were not tested"
+    ],
+    "may_forget": [
+      "duplicate cross-runtime test stream copies only when the evidence contract permits hash-only retention and the exact stream remains deterministically regenerable from the frozen specification and identified machinery; a digest alone cannot reconstruct bytes",
+      "diagnostic-category spelling only under B1 itself; it is not forgettable under the stronger committed breaker object, which declared portable categories and therefore fails"
+    ],
+    "unsupported_if_future_admitted": [
+      "coherent valid-state integrity, freshness, authority, or version selection without an independent surviving anchor",
+      "migration for a new observer that splits an old B1 equivalence class"
+    ]
+  },
+  "provenance_limitations": {
+    "allowed_rust_inputs": [
+      "FROZEN-B0.md",
+      "CONTRACT-B1.md",
+      "SCOPE-B1.md",
+      "PROCESS-RESTORE-B3.json",
+      "FIRST-MILESTONE.md"
+    ],
+    "forbidden_inputs_attested_not_read": [
+      "c0_*.py",
+      "test_*.py",
+      "generated Python transition tables",
+      "REALIZATION-* and undisclosed RUNTIME-BREAKER content"
+    ],
+    "late_wire_amendment": "exact ZGTR framing was supplied after both state stream hashes matched; the earlier B3 report was not byte-complete",
+    "shared_worktree_incident": "root commit 131a0e6 accidentally included early staged agent files with the hidden commitment; git chronology alone does not prove input independence",
+    "agent_independence": "attested by the run and file quarantine; hashes prove contents, not private observation histories"
+  }
+}
