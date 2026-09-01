@@ -9,7 +9,8 @@ Planned evidence artifacts:
 - an executable finite history/context enumerator and independent raw-trace
   oracle;
 - quotient and right-congruence computation;
-- candidate cold-restart differential tests;
+- candidate in-process encode/recover differential tests (process restart is a
+  separate unsupported probe until exercised);
 - exhaustive declared deletion/merge search with minimized witnesses;
 - fresh-domain, hidden-breaker, and archived-attack results;
 - simultaneous non-scalar candidate measurements and explicit unknowns.
