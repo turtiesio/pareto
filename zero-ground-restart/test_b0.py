@@ -3,9 +3,13 @@
 from __future__ import annotations
 
 import ast
+import base64
+from collections import Counter, defaultdict
+import hashlib
 from pathlib import Path
 import sys
 import unittest
+import zlib
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 
@@ -33,6 +37,7 @@ from c0_experiment import (
     exhaustive_component_deletions,
     future_contexts,
     generate_histories,
+    history_order,
     mask_names,
     minimized_pair_witness_certificate,
     pair_merge_certificate,
@@ -232,7 +237,7 @@ class FreshGoldenTests(unittest.TestCase):
         self.assertEqual(self.observe(no_data, RESUME).client, ("out:client:NO_DATA(k)",))
         self.assertEqual(self.observe(absent, RESUME).client, ("out:client:ABSENT(k)",))
 
-    def test_g09_exact_why_after_restart(self) -> None:
+    def test_g09_exact_why_at_logical_cut(self) -> None:
         cut = append_legal(history(inbound("P", "a", "1")), inbound("X"))
         self.assertEqual(
             self.observe(cut, RESUME).client,
@@ -535,6 +540,21 @@ class HarnessTests(unittest.TestCase):
         self.assertEqual(certificate.pair_context_comparisons, 8983832)
         self.assertEqual(certificate.winning_context_map_raw_bytes, 1419672)
         self.assertEqual(
+            certificate.maximum_minimum_length_histories_per_class, 4
+        )
+        self.assertEqual(
+            certificate.total_minimum_length_histories_retained, 1824
+        )
+        raw_map = zlib.decompress(
+            base64.b64decode(certificate.winning_context_map_zlib_base64)
+        )
+        self.assertEqual(len(raw_map), certificate.winning_context_map_raw_bytes)
+        self.assertEqual(len(certificate.winning_context_map_zlib_base64) % 4, 0)
+        self.assertEqual(
+            hashlib.sha256(raw_map).hexdigest(),
+            certificate.winning_context_map_sha256,
+        )
+        self.assertEqual(
             certificate.sha256,
             "643a4cc860a4de957d47be9aa144df1d8da482509157bc00fe60cf6597ba770d",
         )
@@ -543,6 +563,30 @@ class HarnessTests(unittest.TestCase):
             "4e4a93c868c7ccdd59f30acf921ac009605b3c4e234477f686d33cc17db5e3d4",
         )
         self.assertIn("not temporal", certificate.tie_break)
+        self.assertIn("retain every", certificate.history_selection)
+
+    def test_minimum_length_history_candidate_inventory_is_exact(self) -> None:
+        grouped: dict[object, list[tuple[Frame, ...]]] = defaultdict(list)
+        for item in sorted(self.corpus.histories, key=history_order):
+            grouped[self.congruence.class_key(replay(item))].append(item)
+        retained = {
+            key: tuple(item for item in values if len(item) == len(values[0]))
+            for key, values in grouped.items()
+        }
+        self.assertEqual(len(retained), 1192)
+        self.assertEqual(sum(map(len, retained.values())), 1824)
+        self.assertEqual(max(map(len, retained.values())), 4)
+        self.assertEqual(
+            Counter(map(len, retained.values())),
+            Counter({1: 604, 2: 560, 3: 12, 4: 16}),
+        )
+        for key, candidates in retained.items():
+            minimum = min(map(len, grouped[key]))
+            self.assertTrue(all(len(item) == minimum for item in candidates))
+            self.assertEqual(
+                set(candidates),
+                {item for item in grouped[key] if len(item) == minimum},
+            )
 
     def test_evolution_factor_through_and_split_criterion_for_both_encodings(self) -> None:
         ordinal = OrdinalCandidate(self.machine)

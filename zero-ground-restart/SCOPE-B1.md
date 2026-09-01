@@ -14,23 +14,31 @@ contract. It is not the architecture and does not establish global minimality.
   The selector and admission observation mechanism are charged to the TCB.
 - A separate stable right congruence closes the entire finite-value quiescent
   turn machine and its one-output cut states.
-- Ordinal and canonical-representative encodings survive in-process
-  encode/recover at every generated cut and differentially match the independent
-  raw-trace oracle. No process restart is exercised.
+- Ordinal and canonical-representative encodings call their public `persist`
+  and `recover` paths in-process for all 82,584 generated boundary classes.
+  `resume` and all sixteen input attempts are differentially checked against
+  the independent raw-trace oracle at every class (1,403,928 checks). No
+  process restart is exercised.
 - A clean second enumeration/refinement/table build reproduces the exact
   artifact digest, rank ordering, and canonical representatives.
+- The two sound direct deletions have exact exhaustive rebuild checks:
+  `rule_on_0` is the B1 constant `0`; `owed_port` is `-` when quiescent,
+  `action` exactly for owed kind `DO`, and `client` otherwise.
 - All 1,024 projections of the declared ten-component falsification grammar are
   checked. Each direct deletion has either a globally minimized bounded witness
-  or an explicit derivability/redundancy verdict.
-- Every unordered pair of corpus quotient classes is enumerated into a
-  deterministic certificate. The certificate proves branch coverage; it does
-  not claim a separately materialized minimized witness for every pair.
+  or the explicit `MAY_REBUILD` classification and checked recipe above.
+- Every unordered pair of corpus quotient classes has an executed, hashed
+  minimized bounded witness. Selection exhausts every corpus history at each
+  class's minimum crossing length and all contexts through the winning depth.
+  The big-endian uint16 winning-context map is emitted as zlib+base64 data, not
+  only as a hash commitment.
 - Fresh G01--G09 separations, E01--E09 equivalences, and the ten-output-kind
-  restart matrix are literal goldens.
-- A quotient-compatible observer is rebuildable for both encodings. An added
-  observer that distinguishes E03 cannot be migrated deterministically from
-  either old encoding. `R` remains in-band interpretation selection, not
-  contract evolution.
+  logical-cut matrix are literal goldens.
+- The sole positive evolution probe is `current_b1_observer` over the enumerated
+  corpus, where it factors through both encodings. An added observer that
+  distinguishes E03 cannot be migrated deterministically from either old
+  encoding. No general positive evolution result is claimed; `R` remains
+  in-band interpretation selection, not contract evolution.
 
 The emitted witness core is deduplicated and fixed-point 1-deletion-minimal
 relative to retaining the exact named endpoints plus one collision for every

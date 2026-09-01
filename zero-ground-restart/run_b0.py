@@ -426,6 +426,7 @@ def run(
     owed_classes = len(machine.all_keys) - qparts
     table_cells = qparts * len(INPUTS) + owed_classes
     rank_bits = max(1, math.ceil(math.log2(len(machine.all_keys))))
+    artifact_inventory = _artifact_inventory()
     candidate_measurements = {
         "logical_information": {
             "full_boundary_class_count": len(machine.all_keys),
@@ -451,7 +452,15 @@ def run(
             "approximate_textual_bytes": machine.approximate_table_bytes(),
             "note": "textual proxy only; Python objects, allocator, indexes, interpreter, and storage framing are additional",
         },
-        "artifact_inventory": _artifact_inventory(),
+        "artifact_inventory": artifact_inventory,
+        "artifact_inventory_totals": {
+            "files": len(artifact_inventory),
+            "bytes": sum(int(item["bytes"]) for item in artifact_inventory),
+            "physical_lines": sum(
+                int(item["physical_lines"]) for item in artifact_inventory
+            ),
+            "scope": "bound specification/generator plus all executable verifier/evidence files",
+        },
         "inventory_completeness": (
             "INCOMPLETE total-system storage: excludes CPython/stdlib/OS, filesystem metadata, "
             "boundary capture/durability machinery, packaging, logs, and physical redundancy"
@@ -516,6 +525,11 @@ def run(
         mask = full_mask & ~(1 << index)
         direct[name] = {
             "verdict": "sound" if mask in deletions.sound_masks else "collision",
+            "classification": (
+                "MAY_REBUILD"
+                if name in {"rule_on_0", "owed_port"}
+                else "MUST_SURVIVE_WITHIN_DECLARED_COMPONENT_GRAMMAR"
+            ),
             "witness": witness_json(witnesses[name]),
         }
 
@@ -557,17 +571,31 @@ def run(
             "witness_certificate_sha256": pair_witnesses.sha256,
             "winning_context_uint16_map_sha256": pair_witnesses.winning_context_map_sha256,
             "winning_context_uint16_map_raw_bytes": pair_witnesses.winning_context_map_raw_bytes,
+            "winning_context_uint16_map_zlib_bytes": pair_witnesses.winning_context_map_zlib_bytes,
+            "winning_context_uint16_map_zlib_base64": pair_witnesses.winning_context_map_zlib_base64,
+            "winning_context_uint16_map_encoding": (
+                "base64 of zlib(level=9) over big-endian uint16 context IDs in canonical "
+                "triangular class-pair order"
+            ),
             "earliest_depth_counts": pair_witnesses.depth_counts,
-            "active_vertices_by_earliest_depth": pair_witnesses.active_vertices_by_depth,
+            "active_vertices_by_reached_depth": pair_witnesses.active_vertices_by_depth,
             "winning_context_count": pair_witnesses.winning_contexts,
             "pair_context_comparisons": pair_witnesses.pair_context_comparisons,
-            "history_candidates_per_class": pair_witnesses.history_candidates_per_class,
+            "maximum_minimum_length_histories_per_class": (
+                pair_witnesses.maximum_minimum_length_histories_per_class
+            ),
+            "total_minimum_length_histories_retained": (
+                pair_witnesses.total_minimum_length_histories_retained
+            ),
             "history_selection": pair_witnesses.history_selection,
             "context_tie_break": pair_witnesses.tie_break,
             "basis": (
                 "each pair has a selected bounded context with unequal exact observations; "
                 "all shallower contexts and all same-depth tie-break candidates were checked; "
-                "canonical length-prefixed records hash pair/class/history/context/observations"
+                "every minimum-crossing corpus history for each class was considered; canonical "
+                "length-prefixed records hash pair/class/history/context/observations; the emitted "
+                "winner map and deterministic tables permit reconstruction rather than only a hash "
+                "commitment"
             ),
         },
         "component_deletion_search": {

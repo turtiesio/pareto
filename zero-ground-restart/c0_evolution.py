@@ -1,8 +1,9 @@
-"""Executable migration criterion for observers proposed after quotienting.
+"""Corpus-scoped migration probe for observers proposed after quotienting.
 
-An added observer is rebuildable from an old encoding exactly when its required
-value is constant on every old encoding cell. This is a probe, not a general
-contract-evolution mechanism.
+Within the supplied histories, an added observer factors through an old
+encoding exactly when its required value is constant on every observed old
+encoding cell. This is a finite probe, not a general contract-evolution
+mechanism or a check of unobserved encoding cells.
 """
 
 from __future__ import annotations
@@ -29,6 +30,8 @@ def factor_probe(
     encode: Callable[[History], Hashable],
     observer: Callable[[History], object],
 ) -> FactorProbe:
+    """Check the factorization criterion only over ``histories``."""
+
     cells: dict[Hashable, tuple[object, History]] = {}
     for history in sorted(histories, key=history_order):
         encoded = encode(history)
@@ -53,4 +56,3 @@ def authored_crossing_count_observer(history: History) -> int:
     """A split extension: count all prior P crossings, including overwritten ones."""
 
     return sum(frame.direction == "in" and frame.kind == "P" for frame in history)
-

@@ -3,12 +3,14 @@
 from __future__ import annotations
 
 from array import array
+import base64
 from collections import defaultdict, deque
 from dataclasses import dataclass
 from functools import lru_cache
 import hashlib
 from itertools import product
 from typing import Callable, Iterable, Iterator, Mapping, Optional
+import zlib
 
 from c0_oracle import (
     ACTION,
@@ -657,7 +659,10 @@ def direct_deletion_witnesses(
         mask = full & ~(1 << index)
         collision = search.first_conflict.get(mask)
         if collision is None:
-            result[name] = "DERIVABLE_OR_REDUNDANT_IN_DECLARED_GRAMMAR"
+            if name in {"rule_on_0", "owed_port"}:
+                result[name] = "MAY_REBUILD_BY_EXHAUSTIVELY_CHECKED_B1_RECIPE"
+            else:
+                result[name] = "NO_BOUNDED_COLLISION; CLASSIFICATION_UNRESOLVED"
             continue
         witness = globally_minimize_deletion_collision(histories, mask, residuals)
         result[name] = witness if witness is not None else "NO_BOUNDED_FUTURE_WITNESS"
@@ -672,11 +677,11 @@ def count_pair_merges(class_keys: Iterable[object]) -> int:
 
 
 def pair_merge_certificate(class_keys: Iterable[object]) -> tuple[int, str]:
-    """Enumerate every unordered corpus-class pair into a deterministic digest.
+    """Legacy branch-only digest used to cross-check all-pair coverage.
 
-    The certificate proves coverage of the pair-merge branch set; it does not
-    pretend that a minimized future witness was materialized for every pair.
-    Separation is supplied by the independently verified final refinement IDs.
+    This small digest is not the minimized-witness certificate. The latter is
+    produced by :func:`minimized_pair_witness_certificate` and executes a
+    separating context for every pair.
     """
 
     keys = tuple(sorted(set(class_keys)))
@@ -701,11 +706,14 @@ class PairWitnessCertificate:
     sha256: str
     winning_context_map_sha256: str
     winning_context_map_raw_bytes: int
+    winning_context_map_zlib_bytes: int
+    winning_context_map_zlib_base64: str
     depth_counts: Mapping[int, int]
     active_vertices_by_depth: Mapping[int, int]
     winning_contexts: int
     pair_context_comparisons: int
-    history_candidates_per_class: int
+    maximum_minimum_length_histories_per_class: int
+    total_minimum_length_histories_retained: int
     history_selection: str
     tie_break: str
 
@@ -757,16 +765,16 @@ def minimized_pair_witness_certificate(
     histories: Iterable[tuple[Frame, ...]],
     class_of: Callable[[Snapshot], object],
     contexts: tuple[Context, ...],
-    *,
-    history_candidates_per_class: int = 4,
 ) -> PairWitnessCertificate:
     """Execute and hash a minimized bounded witness for every quotient pair.
 
     Context minimization is exact over the supplied contexts: earliest inbound
     depth, then ``Observation.flattened`` divergence index, then context token.
-    Histories are selected separately: retain at most four shortest-then-lexical
-    corpus histories per class and minimize total crossings, Levenshtein
-    distance, then the two lexical frame-token tuples.
+    Histories are selected separately and exactly over the corpus: retain every
+    history at each class's minimum crossing length, then minimize Levenshtein
+    distance and the two lexical frame-token tuples. Total crossings is included
+    in the certificate score even though it is constant over those retained
+    candidates.
     """
 
     grouped: dict[object, list[tuple[Frame, ...]]] = defaultdict(list)
@@ -774,8 +782,17 @@ def minimized_pair_witness_certificate(
         grouped[class_of(replay(history))].append(history)
     class_keys = tuple(sorted(grouped))
     class_histories = tuple(
-        tuple(grouped[key][:history_candidates_per_class]) for key in class_keys
+        tuple(
+            history
+            for history in grouped[key]
+            if len(history) == len(grouped[key][0])
+        )
+        for key in class_keys
     )
+    if any(not values for values in class_histories):
+        raise AssertionError("each corpus class must retain a minimum-length history")
+    maximum_minimum_length_histories = max(map(len, class_histories), default=0)
+    total_minimum_length_histories = sum(map(len, class_histories))
     snapshots = tuple(replay(values[0]) for values in class_histories)
 
     observation_ids: dict[Observation, int] = {}
@@ -889,21 +906,28 @@ def minimized_pair_witness_certificate(
     if sys.byteorder == "little":
         canonical_map.byteswap()
     map_bytes = canonical_map.tobytes()
+    compressed_map = zlib.compress(map_bytes, level=9)
     return PairWitnessCertificate(
         pair_count=pair_count,
         sha256=digest.hexdigest(),
         winning_context_map_sha256=hashlib.sha256(map_bytes).hexdigest(),
         winning_context_map_raw_bytes=len(map_bytes),
+        winning_context_map_zlib_bytes=len(compressed_map),
+        winning_context_map_zlib_base64=base64.b64encode(compressed_map).decode("ascii"),
         depth_counts=dict(sorted(depth_counts.items())),
         active_vertices_by_depth={
             depth: len(vertices) for depth, vertices in sorted(active_vertices.items())
         },
         winning_contexts=len(used_contexts),
         pair_context_comparisons=comparisons,
-        history_candidates_per_class=history_candidates_per_class,
+        maximum_minimum_length_histories_per_class=(
+            maximum_minimum_length_histories
+        ),
+        total_minimum_length_histories_retained=total_minimum_length_histories,
         history_selection=(
-            "per class retain <=4 shortest-then-lexical corpus histories; per pair minimize "
-            "total crossings, Levenshtein distance, left tokens, right tokens"
+            "per class retain every corpus history at that class's minimum crossing length; "
+            "per pair exhaustively minimize total crossings, Levenshtein distance, left "
+            "tokens, right tokens"
         ),
         tie_break=(
             "earliest inbound depth; then first differing Observation.flattened coordinate "

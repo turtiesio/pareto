@@ -102,7 +102,7 @@ def named_cases() -> dict[str, NamedCase]:
         "E09": NamedCase((pending_k0, _turns(inbound("P", "a", "0"), inbound("A", "k"), inbound("S", "k")))),
     }
 
-    restart_bases = {
+    cut_bases = {
         "EMPTY": ((), inbound("O")),
         "RAW": (p0, inbound("O")),
         "VAL": (p0, inbound("Q")),
@@ -114,8 +114,8 @@ def named_cases() -> dict[str, NamedCase]:
         "PENDING": (pending_k0, inbound("S", "k")),
         "DONE": (done_k0, inbound("S", "k")),
     }
-    for kind, (base, command) in restart_bases.items():
-        cases[f"RESTART_{kind}"] = NamedCase(
+    for kind, (base, command) in cut_bases.items():
+        cases[f"CUT_{kind}"] = NamedCase(
             (_cut(base, command),),
             (
                 Context((RESUME,)),
@@ -217,4 +217,3 @@ def build_witness_core(
         tuple(sorted(direct_masks)),
         certificate,
     )
-

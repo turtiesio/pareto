@@ -46,10 +46,10 @@ unknown cells in equivalence.
 
 ## Executed scope
 
-The deterministic evidence file has SHA-256
-`949c1ca8d28610e4654abfbf122c889ca2392655378859676bb0c3871d4f086e`.
+The deterministic B2 evidence file has SHA-256
+`18201ff14c0be6fddb822da4a36f1ba669fed23f9a3a0a66fd6cc623708fe67b`.
 Its generated specification/table artifact digest is
-`c802a0c5bac42a0ac1cdbc3de8afe854226d55a35518b06aa44efdc8bed3ac8a`.
+`77d6a2b92664a94971680664883ca0fbb08221ed14d090d07defbe7ee46ad657`.
 
 | Exhausted or checked item | Result |
 |---|---:|
@@ -60,15 +60,21 @@ Its generated specification/table artifact digest is
 | corpus in-process encode/recover round trips | 125,056 |
 | finite-domain quiescent states/classes | 10,420 / 10,420 |
 | complete finite-domain boundary-phase classes | 82,584 |
-| full-universe round trips per encoding | 82,584 |
+| full-universe in-process public `persist`/`recover` checks per encoding | 82,584 |
+| full-universe raw-oracle differential checks (`resume` + 16 inputs) | 1,403,928 |
 | declared component projections | all 1,024 |
-| unordered corpus-class merge branches | 709,836 |
-| tests | 40 / 40 passed |
+| unordered corpus-class merges with executed minimized witnesses | 709,836 |
+| minimum-length history candidates retained for exact pair minimization | 1,824 (maximum 4/class) |
+| tests | 45 / 45 passed |
 
 The bounded residual partition and the stable finite-domain partition agree on
 all 1,192 tested cuts. Stable refinement takes two rounds and passes the
 right-congruence invariant. Both candidate encodings have zero detected
 collisions and are bijective over all 82,584 generated boundary classes.
+The 709,836-pair certificate also emits a reproducible big-endian uint16
+winning-context map: 1,419,672 raw bytes, 9,785 bytes under zlib level 9, with
+raw-map SHA-256
+`4e4a93c868c7ccdd59f30acf921ac009605b3c4e234477f686d33cc17db5e3d4`.
 
 The exhaustive domain was reduced to a 36-history, 11-context witness core.
 That core is fixed-point one-deletion-minimal only relative to retaining the
@@ -187,7 +193,7 @@ added to the permitted future language.
 | authoring burden | external B1 authoring unchanged; table/migration maintenance unmeasured | external B1 authoring unchanged; canonicalization maintenance unmeasured |
 | query/navigation | constant table lookup after machinery is available | parse/replay proportional to at most 236 bytes here; rebuilt index optional |
 | runtime | finite table operations are O(1) | in-process decode/replay is O(representative bytes/crossings); process restart untested |
-| shared storage | 238,884 explicit transition/output cells; about 19,635,161 bytes as measured textual rendition | source/parser plus canonicalization machinery; storing all representatives also moves substantial state into a shared map |
+| shared storage | 238,884 explicit transition/output cells; about 19,635,161 bytes as an incomplete textual-table proxy | source/parser plus canonicalization machinery; storing all representatives also moves substantial state into a shared map |
 | operations | exact rank/table/spec coordination and migration | exact syntax/order/spec coordination and canonical recovery |
 | TCB | capture/durability, runtime, spec, quotient generator, table, decoder, verifier, medium | capture/durability, runtime, spec, parser, replay oracle, canonicalizer, verifier, medium |
 | evolution | one corpus observer factored through; a demonstrated splitting addition cannot migrate | identical tested boundary; representative cannot recover the demonstrated split past |
@@ -200,6 +206,13 @@ Candidate B exposes a compact behavioral example and fits unlike sequential
 encodings. Neither is known no worse in every total-system dimension, and the
 unmeasured human/physical dimensions prevent a dominance claim.
 
+The storage figures are non-additive, incomplete proxies. They exclude Python
+objects and allocator overhead, interpreter and OS, filesystem framing, durable
+boundary capture, packaging, logs, redundancy, and physical media. The
+executable spec/verifier inventory is separately reported as 129,277 bytes and
+3,211 physical lines across eight files; that too is not a total deployment
+size.
+
 A literal trace is a third useful attack baseline. It preserves B1 but retains
 many distinctions the quotient proves unnecessary, grows without bound, and
 has linear replay cost. It can be easier to inspect and can accommodate some
@@ -208,10 +221,11 @@ encoding, but it exposes where state-minimal candidates moved evolution risk.
 
 ## Evolution and unlike realization results
 
-A generated observer that asks a function of the old B1 class factors through
-both encodings and is MAY REBUILD. An observer that counts all prior `P`
-crossings does not: `P(a,0)` and `P(a,0);P(a,0)` share both old encodings but
-require counts 1 and 2. No deterministic migration from either old quotient can
+The sole positive result is `current_b1_observer`, which factored through each
+old encoding on the 62,528-history corpus; no general positive evolution result
+is claimed. An observer that counts all prior `P` crossings conclusively fails:
+the E03 histories `P(a,0);P(b,1)` and `P(b,1)` share both old encodings but
+require counts 2 and 1. No deterministic migration from either old quotient can
 support that split. Arbitrary future interpretation and prior forgetting are
 therefore incompatible.
 
@@ -236,8 +250,10 @@ comparator.
 - Digest deletion removes a same-runtime artifact-mismatch guard and moves exact
   artifact selection into deployment operations and TCB; it is not a general
   portability mechanism.
-- Index/cache deletion moves work into cold-start recomputation; B1 declares no
-  deadline, so it is informationally rebuildable but not operationally free.
+- Index/cache deletion moves work into recomputation. The measurement only
+  clears an in-process replay cache; no fresh-process startup measurement occurred.
+  B1 declares no deadline, so this is informationally rebuildable but not
+  operationally free.
 - Human-readable provenance deletion moves interpretation to tools or people;
   cognition remains unmeasured, not zero.
 
@@ -247,10 +263,10 @@ comparator.
   name is universally required.
 - Global future completeness and global program/description minimality are not
   claimed.
-- The 709,836 pair branches have a deterministic enumeration certificate and
-  distinct final refinement ids, but a minimized future witness was not
-  materialized for every pair. Direct surviving responsibilities do have
-  minimized witnesses.
+- All 709,836 corpus-class pair branches have executed minimized bounded
+  witnesses. The certificate exhausts every minimum-crossing corpus history in
+  each class and all contexts through the earliest separating depth; this is
+  still only the declared finite corpus/future grammar, not a global proof.
 - Irreducibility is relative to the declared ten-coordinate transform grammar;
   arbitrary recoding minimality is not computable from this experiment alone.
 - Crashes inside boundary capture, torn writes, physical delivery ambiguity,

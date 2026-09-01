@@ -1,0 +1,931 @@
+{
+  "bounds": {
+    "boundary_prefix_cuts": 62528,
+    "max_future_inbound_attempts": 2,
+    "max_history_inbound_frames": 4,
+    "normalized_future_contexts": 2114
+  },
+  "candidate_checks": {
+    "actual_process_restart_restore_checks": 0,
+    "artifact_digest_equal_after_clean_rebuild": true,
+    "canonical_representatives_equal_after_clean_rebuild": true,
+    "clean_rebuilds": 1,
+    "decoded_context_checks": 2519888,
+    "full_universe_classes": 82584,
+    "full_universe_resume_and_16_input_differential_checks": 1403928,
+    "in_process_encode_recover_round_trips": 125056,
+    "one_step_decoder_checks": 20264,
+    "ordinal_encoding_collisions": 0,
+    "ordinal_full_universe_distinct_encodings": 82584,
+    "ordinal_full_universe_in_process_encode_recover": 82584,
+    "rank_order_equal_after_clean_rebuild": true,
+    "representative_encoding_collisions": 0,
+    "representative_full_universe_distinct_encodings": 82584,
+    "representative_full_universe_in_process_encode_recover": 82584,
+    "unique_cut_snapshots": 1192
+  },
+  "candidate_measurements": {
+    "artifact_inventory": [
+      {
+        "bytes": 5120,
+        "file": "CONTRACT-B1.md",
+        "inventory_role": "artifact-bound specification/generator",
+        "physical_lines": 84
+      },
+      {
+        "bytes": 8768,
+        "file": "c0_oracle.py",
+        "inventory_role": "artifact-bound specification/generator",
+        "physical_lines": 263
+      },
+      {
+        "bytes": 34877,
+        "file": "c0_experiment.py",
+        "inventory_role": "artifact-bound specification/generator",
+        "physical_lines": 950
+      },
+      {
+        "bytes": 10810,
+        "file": "c0_candidates.py",
+        "inventory_role": "artifact-bound specification/generator",
+        "physical_lines": 283
+      },
+      {
+        "bytes": 8006,
+        "file": "c0_core.py",
+        "inventory_role": "verification/evidence code not included in candidate artifact digest",
+        "physical_lines": 219
+      },
+      {
+        "bytes": 1892,
+        "file": "c0_evolution.py",
+        "inventory_role": "verification/evidence code not included in candidate artifact digest",
+        "physical_lines": 58
+      },
+      {
+        "bytes": 30546,
+        "file": "run_b0.py",
+        "inventory_role": "verification/evidence code not included in candidate artifact digest",
+        "physical_lines": 697
+      },
+      {
+        "bytes": 29258,
+        "file": "test_b0.py",
+        "inventory_role": "verification/evidence code not included in candidate artifact digest",
+        "physical_lines": 657
+      }
+    ],
+    "artifact_inventory_totals": {
+      "bytes": 129277,
+      "files": 8,
+      "physical_lines": 3211,
+      "scope": "bound specification/generator plus all executable verifier/evidence files"
+    },
+    "benchmarks": {
+      "asymptotics": {
+        "boundary_update": "O(1) generated table lookup in this finite realization",
+        "ordinal_recover": "O(1) table lookup after the table is available",
+        "representative_recover": "O(serialized representative crossings + parse bytes)"
+      },
+      "cut_classes": 1192,
+      "environment": "single CPython process; wall clock; not a physical realization test",
+      "timing": "excluded from deterministic evidence; run without --deterministic to measure"
+    },
+    "generated_mapping_storage_proxies": {
+      "label": "deterministic textual proxies, not allocator/disk-format measurements",
+      "ordered_keys_repr_utf8_bytes_plus_newlines": 3153731,
+      "rank_map_repr_utf8_bytes_plus_newlines": 3885877,
+      "representative_map_repr_utf8_bytes_plus_newlines": 20564121
+    },
+    "generated_table": {
+      "approximate_textual_bytes": 19635161,
+      "explicit_transition_output_cells": 238884,
+      "note": "textual proxy only; Python objects, allocator, indexes, interpreter, and storage framing are additional"
+    },
+    "human_and_physical": {
+      "cognition_and_human_error": "UNKNOWN: no declared user protocol or study",
+      "cross_physical_media_realization": "UNKNOWN: only software differential tests ran"
+    },
+    "inventory_completeness": "INCOMPLETE total-system storage: excludes CPython/stdlib/OS, filesystem metadata, boundary capture/durability machinery, packaging, logs, and physical redundancy",
+    "logical_information": {
+      "digest_current_utf8_hex_characters_and_bytes": 64,
+      "digest_theoretical_binary_packing_bytes": 32,
+      "full_boundary_class_count": 82584,
+      "ordinal_packed_rank_bytes": 3,
+      "ordinal_rank_bits": 17
+    },
+    "representative_serialized_bytes_excluding_digest": {
+      "corpus_class_payload_total_bytes": 99075,
+      "corpus_classes": {
+        "max": 115,
+        "median": 88,
+        "min": 0
+      },
+      "full_class_payload_total_bytes": 14584671,
+      "full_class_universe": {
+        "max": 236,
+        "median": 181,
+        "min": 0
+      }
+    },
+    "tcb_and_dependencies": [
+      "boundary capture and durable cut mechanism (not implemented here)",
+      "CPython interpreter and Python standard library",
+      "CONTRACT-B1 framing, admission selector, and admission observation choices",
+      "raw-trace parser/replay oracle",
+      "finite-state enumerator and partition refinement",
+      "canonical representative search and rank/table generator",
+      "candidate decoder and conformance tests",
+      "filesystem/medium retaining encoding and exact specification bundle",
+      "same-runtime artifact selection/mismatch guard",
+      "SHA-256 collision resistance for mismatch detection (assumption, not proved)"
+    ]
+  },
+  "common_mode_risk": {
+    "mitigations_run": [
+      "raw oracle imports no quotient or candidate module",
+      "literal black-box G01-G09 and E01-E09 goldens",
+      "ten-output-kind logical-cut encode/recover matrix",
+      "right-congruence invariant and candidate/oracle differential checks",
+      "deliberate generated-table mutation caught by the checker"
+    ],
+    "remaining": "oracle, quotient, candidates, and tests still share Frame values, CPython, the B1 interpretation, and one host; correlated specification/runtime errors remain possible"
+  },
+  "component_deletion_search": {
+    "declared_components": [
+      "current_source",
+      "current_bit",
+      "rule_label",
+      "rule_on_0",
+      "rule_on_1",
+      "action_k",
+      "action_l",
+      "owed_port",
+      "owed_kind",
+      "owed_arguments"
+    ],
+    "direct_deletions": {
+      "action_k": {
+        "classification": "MUST_SURVIVE_WITHIN_DECLARED_COMPONENT_GRAMMAR",
+        "verdict": "collision",
+        "witness": {
+          "future": "in:action:ACK(k)",
+          "left": [
+            "in:client:P(a,0)"
+          ],
+          "left_observation": {
+            "action": [],
+            "admission": [
+              "disabled"
+            ],
+            "client": []
+          },
+          "right": [
+            "in:client:P(a,0)",
+            "in:client:A(k)",
+            "out:action:DO(k,a,0,d,0)"
+          ],
+          "right_observation": {
+            "action": [],
+            "admission": [
+              "enabled"
+            ],
+            "client": []
+          },
+          "score": [
+            4,
+            2,
+            1,
+            0,
+            [
+              "in:client:P(a,0)"
+            ],
+            [
+              "in:client:P(a,0)",
+              "in:client:A(k)",
+              "out:action:DO(k,a,0,d,0)"
+            ],
+            "in:action:ACK(k)"
+          ]
+        }
+      },
+      "action_l": {
+        "classification": "MUST_SURVIVE_WITHIN_DECLARED_COMPONENT_GRAMMAR",
+        "verdict": "collision",
+        "witness": {
+          "future": "in:action:ACK(l)",
+          "left": [
+            "in:client:P(a,0)"
+          ],
+          "left_observation": {
+            "action": [],
+            "admission": [
+              "disabled"
+            ],
+            "client": []
+          },
+          "right": [
+            "in:client:P(a,0)",
+            "in:client:A(l)",
+            "out:action:DO(l,a,0,d,0)"
+          ],
+          "right_observation": {
+            "action": [],
+            "admission": [
+              "enabled"
+            ],
+            "client": []
+          },
+          "score": [
+            4,
+            2,
+            1,
+            0,
+            [
+              "in:client:P(a,0)"
+            ],
+            [
+              "in:client:P(a,0)",
+              "in:client:A(l)",
+              "out:action:DO(l,a,0,d,0)"
+            ],
+            "in:action:ACK(l)"
+          ]
+        }
+      },
+      "current_bit": {
+        "classification": "MUST_SURVIVE_WITHIN_DECLARED_COMPONENT_GRAMMAR",
+        "verdict": "collision",
+        "witness": {
+          "future": "in:client:A(k);resume",
+          "left": [
+            "in:client:P(a,0)"
+          ],
+          "left_observation": {
+            "action": [
+              "out:action:DO(k,a,0,d,0)"
+            ],
+            "admission": [
+              "enabled"
+            ],
+            "client": []
+          },
+          "right": [
+            "in:client:P(a,1)"
+          ],
+          "right_observation": {
+            "action": [
+              "out:action:DO(k,a,1,d,1)"
+            ],
+            "admission": [
+              "enabled"
+            ],
+            "client": []
+          },
+          "score": [
+            2,
+            1,
+            1,
+            1,
+            [
+              "in:client:P(a,0)"
+            ],
+            [
+              "in:client:P(a,1)"
+            ],
+            "in:client:A(k);resume"
+          ]
+        }
+      },
+      "current_source": {
+        "classification": "MUST_SURVIVE_WITHIN_DECLARED_COMPONENT_GRAMMAR",
+        "verdict": "collision",
+        "witness": {
+          "future": "in:client:A(k);resume",
+          "left": [
+            "in:client:P(a,0)"
+          ],
+          "left_observation": {
+            "action": [
+              "out:action:DO(k,a,0,d,0)"
+            ],
+            "admission": [
+              "enabled"
+            ],
+            "client": []
+          },
+          "right": [
+            "in:client:P(b,0)"
+          ],
+          "right_observation": {
+            "action": [
+              "out:action:DO(k,b,0,d,0)"
+            ],
+            "admission": [
+              "enabled"
+            ],
+            "client": []
+          },
+          "score": [
+            2,
+            1,
+            1,
+            1,
+            [
+              "in:client:P(a,0)"
+            ],
+            [
+              "in:client:P(b,0)"
+            ],
+            "in:client:A(k);resume"
+          ]
+        }
+      },
+      "owed_arguments": {
+        "classification": "MUST_SURVIVE_WITHIN_DECLARED_COMPONENT_GRAMMAR",
+        "verdict": "collision",
+        "witness": {
+          "future": "resume",
+          "left": [
+            "in:client:A(k)"
+          ],
+          "left_observation": {
+            "action": [],
+            "admission": [],
+            "client": [
+              "out:client:NO_DATA(k)"
+            ]
+          },
+          "right": [
+            "in:client:A(l)"
+          ],
+          "right_observation": {
+            "action": [],
+            "admission": [],
+            "client": [
+              "out:client:NO_DATA(l)"
+            ]
+          },
+          "score": [
+            2,
+            1,
+            0,
+            0,
+            [
+              "in:client:A(k)"
+            ],
+            [
+              "in:client:A(l)"
+            ],
+            "resume"
+          ]
+        }
+      },
+      "owed_kind": {
+        "classification": "MUST_SURVIVE_WITHIN_DECLARED_COMPONENT_GRAMMAR",
+        "verdict": "collision",
+        "witness": {
+          "future": "resume",
+          "left": [
+            "in:client:A(k)"
+          ],
+          "left_observation": {
+            "action": [],
+            "admission": [],
+            "client": [
+              "out:client:NO_DATA(k)"
+            ]
+          },
+          "right": [
+            "in:client:S(k)"
+          ],
+          "right_observation": {
+            "action": [],
+            "admission": [],
+            "client": [
+              "out:client:ABSENT(k)"
+            ]
+          },
+          "score": [
+            2,
+            1,
+            0,
+            0,
+            [
+              "in:client:A(k)"
+            ],
+            [
+              "in:client:S(k)"
+            ],
+            "resume"
+          ]
+        }
+      },
+      "owed_port": {
+        "classification": "MAY_REBUILD",
+        "verdict": "sound",
+        "witness": "MAY_REBUILD_BY_EXHAUSTIVELY_CHECKED_B1_RECIPE"
+      },
+      "rule_label": {
+        "classification": "MUST_SURVIVE_WITHIN_DECLARED_COMPONENT_GRAMMAR",
+        "verdict": "collision",
+        "witness": {
+          "future": "in:client:P(a,0);in:client:A(k);resume",
+          "left": [],
+          "left_observation": {
+            "action": [
+              "out:action:DO(k,a,0,d,0)"
+            ],
+            "admission": [
+              "enabled",
+              "enabled"
+            ],
+            "client": []
+          },
+          "right": [
+            "in:client:R(u,0,1)"
+          ],
+          "right_observation": {
+            "action": [
+              "out:action:DO(k,a,0,u,0)"
+            ],
+            "admission": [
+              "enabled",
+              "enabled"
+            ],
+            "client": []
+          },
+          "score": [
+            1,
+            1,
+            2,
+            2,
+            [],
+            [
+              "in:client:R(u,0,1)"
+            ],
+            "in:client:P(a,0);in:client:A(k);resume"
+          ]
+        }
+      },
+      "rule_on_0": {
+        "classification": "MAY_REBUILD",
+        "verdict": "sound",
+        "witness": "MAY_REBUILD_BY_EXHAUSTIVELY_CHECKED_B1_RECIPE"
+      },
+      "rule_on_1": {
+        "classification": "MUST_SURVIVE_WITHIN_DECLARED_COMPONENT_GRAMMAR",
+        "verdict": "collision",
+        "witness": {
+          "future": "in:client:P(a,1);in:client:A(k);resume",
+          "left": [
+            "in:client:R(u,0,0)"
+          ],
+          "left_observation": {
+            "action": [
+              "out:action:DO(k,a,1,u,0)"
+            ],
+            "admission": [
+              "enabled",
+              "enabled"
+            ],
+            "client": []
+          },
+          "right": [
+            "in:client:R(u,0,1)"
+          ],
+          "right_observation": {
+            "action": [
+              "out:action:DO(k,a,1,u,1)"
+            ],
+            "admission": [
+              "enabled",
+              "enabled"
+            ],
+            "client": []
+          },
+          "score": [
+            2,
+            1,
+            2,
+            2,
+            [
+              "in:client:R(u,0,0)"
+            ],
+            [
+              "in:client:R(u,0,1)"
+            ],
+            "in:client:P(a,1);in:client:A(k);resume"
+          ]
+        }
+      }
+    },
+    "inclusion_minimal_sound_kept_sets": [
+      [
+        "current_source",
+        "current_bit",
+        "rule_label",
+        "rule_on_1",
+        "action_k",
+        "action_l",
+        "owed_kind",
+        "owed_arguments"
+      ]
+    ],
+    "masks_exhausted": 1024,
+    "sound_masks": 4,
+    "unique_component_rows": 1192
+  },
+  "contract": "FROZEN-B0 + executable contract B1",
+  "deduplicated_witness_core": {
+    "context_count": 11,
+    "contexts": [
+      "resume",
+      "resume;resume",
+      "in:action:ACK(k)",
+      "in:action:ACK(l)",
+      "in:client:P(b,1)",
+      "in:client:A(k);resume",
+      "in:client:S(k);resume",
+      "in:client:P(a,0);in:client:A(k);resume",
+      "in:client:P(a,0);in:client:X;resume",
+      "in:client:P(a,1);in:client:A(k);resume",
+      "in:client:P(a,1);in:client:Q;resume"
+    ],
+    "delta_certificate": {
+      "": "fixed named-case endpoint",
+      "in:client:A(k)": "fixed named-case endpoint",
+      "in:client:A(k);out:client:NO_DATA(k)": "fixed named-case endpoint",
+      "in:client:A(k);out:client:NO_DATA(k);in:client:P(a,0);in:client:A(k);out:action:DO(k,a,0,d,0)": "fixed named-case endpoint",
+      "in:client:A(l)": "last witness for owed_arguments",
+      "in:client:O": "fixed named-case endpoint",
+      "in:client:O;out:client:EMPTY": "fixed named-case endpoint",
+      "in:client:P(a,0)": "fixed named-case endpoint",
+      "in:client:P(a,0);in:client:A(k)": "fixed named-case endpoint",
+      "in:client:P(a,0);in:client:A(k);out:action:DO(k,a,0,d,0)": "fixed named-case endpoint",
+      "in:client:P(a,0);in:client:A(k);out:action:DO(k,a,0,d,0);in:action:ACK(k)": "fixed named-case endpoint",
+      "in:client:P(a,0);in:client:A(k);out:action:DO(k,a,0,d,0);in:action:ACK(k);in:client:A(k)": "fixed named-case endpoint",
+      "in:client:P(a,0);in:client:A(k);out:action:DO(k,a,0,d,0);in:action:ACK(k);in:client:S(k)": "fixed named-case endpoint",
+      "in:client:P(a,0);in:client:A(k);out:action:DO(k,a,0,d,0);in:client:A(k);out:action:DO(k,a,0,d,0)": "fixed named-case endpoint",
+      "in:client:P(a,0);in:client:A(k);out:action:DO(k,a,0,d,0);in:client:P(a,1)": "fixed named-case endpoint",
+      "in:client:P(a,0);in:client:A(k);out:action:DO(k,a,0,d,0);in:client:S(k)": "fixed named-case endpoint",
+      "in:client:P(a,0);in:client:A(k);out:action:DO(k,a,0,d,0);in:client:S(k);out:client:PENDING(k,a,0,d,0)": "fixed named-case endpoint",
+      "in:client:P(a,0);in:client:A(l);out:action:DO(l,a,0,d,0)": "fixed named-case endpoint",
+      "in:client:P(a,0);in:client:O": "fixed named-case endpoint",
+      "in:client:P(a,0);in:client:O;out:client:RAW(a,0)": "fixed named-case endpoint",
+      "in:client:P(a,0);in:client:P(b,1)": "fixed named-case endpoint",
+      "in:client:P(a,0);in:client:Q": "fixed named-case endpoint",
+      "in:client:P(a,0);in:client:Q;out:client:VAL(0)": "fixed named-case endpoint",
+      "in:client:P(a,0);in:client:R(v,0,1)": "fixed named-case endpoint",
+      "in:client:P(a,1)": "last witness for current_source",
+      "in:client:P(a,1);in:client:A(k);out:action:DO(k,a,1,d,1)": "fixed named-case endpoint",
+      "in:client:P(a,1);in:client:X": "fixed named-case endpoint",
+      "in:client:P(b,1)": "fixed named-case endpoint",
+      "in:client:Q": "fixed named-case endpoint",
+      "in:client:R(u,0,0)": "fixed named-case endpoint",
+      "in:client:R(u,0,0);in:client:R(v,0,1)": "fixed named-case endpoint",
+      "in:client:R(u,0,1)": "fixed named-case endpoint",
+      "in:client:R(v,0,1)": "fixed named-case endpoint",
+      "in:client:R(v,0,1);in:client:P(a,0)": "fixed named-case endpoint",
+      "in:client:S(k)": "fixed named-case endpoint",
+      "in:client:X": "fixed named-case endpoint"
+    },
+    "direct_collision_components": [
+      "action_k",
+      "action_l",
+      "current_bit",
+      "current_source",
+      "owed_arguments",
+      "owed_kind",
+      "rule_label",
+      "rule_on_1"
+    ],
+    "histories": [
+      [],
+      [
+        "in:client:A(k)"
+      ],
+      [
+        "in:client:A(l)"
+      ],
+      [
+        "in:client:O"
+      ],
+      [
+        "in:client:P(a,0)"
+      ],
+      [
+        "in:client:P(a,1)"
+      ],
+      [
+        "in:client:P(b,1)"
+      ],
+      [
+        "in:client:Q"
+      ],
+      [
+        "in:client:R(u,0,0)"
+      ],
+      [
+        "in:client:R(u,0,1)"
+      ],
+      [
+        "in:client:R(v,0,1)"
+      ],
+      [
+        "in:client:S(k)"
+      ],
+      [
+        "in:client:X"
+      ],
+      [
+        "in:client:A(k)",
+        "out:client:NO_DATA(k)"
+      ],
+      [
+        "in:client:O",
+        "out:client:EMPTY"
+      ],
+      [
+        "in:client:P(a,0)",
+        "in:client:A(k)"
+      ],
+      [
+        "in:client:P(a,0)",
+        "in:client:O"
+      ],
+      [
+        "in:client:P(a,0)",
+        "in:client:P(b,1)"
+      ],
+      [
+        "in:client:P(a,0)",
+        "in:client:Q"
+      ],
+      [
+        "in:client:P(a,0)",
+        "in:client:R(v,0,1)"
+      ],
+      [
+        "in:client:P(a,1)",
+        "in:client:X"
+      ],
+      [
+        "in:client:R(u,0,0)",
+        "in:client:R(v,0,1)"
+      ],
+      [
+        "in:client:R(v,0,1)",
+        "in:client:P(a,0)"
+      ],
+      [
+        "in:client:P(a,0)",
+        "in:client:A(k)",
+        "out:action:DO(k,a,0,d,0)"
+      ],
+      [
+        "in:client:P(a,0)",
+        "in:client:A(l)",
+        "out:action:DO(l,a,0,d,0)"
+      ],
+      [
+        "in:client:P(a,0)",
+        "in:client:O",
+        "out:client:RAW(a,0)"
+      ],
+      [
+        "in:client:P(a,0)",
+        "in:client:Q",
+        "out:client:VAL(0)"
+      ],
+      [
+        "in:client:P(a,1)",
+        "in:client:A(k)",
+        "out:action:DO(k,a,1,d,1)"
+      ],
+      [
+        "in:client:P(a,0)",
+        "in:client:A(k)",
+        "out:action:DO(k,a,0,d,0)",
+        "in:action:ACK(k)"
+      ],
+      [
+        "in:client:P(a,0)",
+        "in:client:A(k)",
+        "out:action:DO(k,a,0,d,0)",
+        "in:client:P(a,1)"
+      ],
+      [
+        "in:client:P(a,0)",
+        "in:client:A(k)",
+        "out:action:DO(k,a,0,d,0)",
+        "in:client:S(k)"
+      ],
+      [
+        "in:client:A(k)",
+        "out:client:NO_DATA(k)",
+        "in:client:P(a,0)",
+        "in:client:A(k)",
+        "out:action:DO(k,a,0,d,0)"
+      ],
+      [
+        "in:client:P(a,0)",
+        "in:client:A(k)",
+        "out:action:DO(k,a,0,d,0)",
+        "in:action:ACK(k)",
+        "in:client:A(k)"
+      ],
+      [
+        "in:client:P(a,0)",
+        "in:client:A(k)",
+        "out:action:DO(k,a,0,d,0)",
+        "in:action:ACK(k)",
+        "in:client:S(k)"
+      ],
+      [
+        "in:client:P(a,0)",
+        "in:client:A(k)",
+        "out:action:DO(k,a,0,d,0)",
+        "in:client:A(k)",
+        "out:action:DO(k,a,0,d,0)"
+      ],
+      [
+        "in:client:P(a,0)",
+        "in:client:A(k)",
+        "out:action:DO(k,a,0,d,0)",
+        "in:client:S(k)",
+        "out:client:PENDING(k,a,0,d,0)"
+      ]
+    ],
+    "history_count": 36,
+    "minimality_claim": "fixed-point 1-deletion-minimal relative to retaining the exact named G01-G09, E01-E09, ten output-kind cut endpoints, and at least one bounded collision for every unsound direct component deletion; not globally smallest",
+    "named_cases": [
+      "CUT_ABSENT",
+      "CUT_ALREADY",
+      "CUT_DO",
+      "CUT_DONE",
+      "CUT_EMPTY",
+      "CUT_NO_DATA",
+      "CUT_PENDING",
+      "CUT_RAW",
+      "CUT_VAL",
+      "CUT_WHY",
+      "E01",
+      "E02",
+      "E03",
+      "E04",
+      "E05",
+      "E06",
+      "E07",
+      "E08",
+      "E09",
+      "G01",
+      "G02",
+      "G03",
+      "G04",
+      "G05",
+      "G06",
+      "G07",
+      "G08",
+      "G09"
+    ]
+  },
+  "digest_verdict": "same-runtime artifact-mismatch guard only, not a general portability mechanism and not MUST SURVIVE within singleton fixed B1; deletion externalizes artifact selection. SHA-256 collision behavior is UNKNOWN",
+  "enumeration": {
+    "bounded_residual_classes_in_corpus": 1192,
+    "candidate_boundary_classes": 82584,
+    "finite_domain_quiescent_states": 10420,
+    "finite_domain_right_congruence_classes": 10420,
+    "legal_boundary_prefix_histories": 62528,
+    "right_congruence_refinement_rounds": 2,
+    "stable_classes_in_corpus": 1192,
+    "unique_raw_oracle_snapshots": 1192
+  },
+  "evidence_protocol": "B2",
+  "evolution_probe": {
+    "criterion": "new observer must be a total function of every old encoding cell",
+    "encodings": {
+      "canonical_representative": {
+        "corpus_current_b1_observer_factors": true,
+        "explicit_e03_split_witness": {
+          "left": [
+            "in:client:P(a,0)",
+            "in:client:P(b,1)"
+          ],
+          "left_authored_count": 2,
+          "right": [
+            "in:client:P(b,1)"
+          ],
+          "right_authored_count": 1,
+          "same_old_encoding": true
+        },
+        "split_authored_count_observer_factors": false,
+        "split_witness": {
+          "left": [
+            "in:client:P(a,0)"
+          ],
+          "left_value": 1,
+          "right": [
+            "in:client:P(a,0)",
+            "in:client:P(a,0)"
+          ],
+          "right_value": 2
+        }
+      },
+      "ordinal": {
+        "corpus_current_b1_observer_factors": true,
+        "explicit_e03_split_witness": {
+          "left": [
+            "in:client:P(a,0)",
+            "in:client:P(b,1)"
+          ],
+          "left_authored_count": 2,
+          "right": [
+            "in:client:P(b,1)"
+          ],
+          "right_authored_count": 1,
+          "same_old_encoding": true
+        },
+        "split_authored_count_observer_factors": false,
+        "split_witness": {
+          "left": [
+            "in:client:P(a,0)"
+          ],
+          "left_value": 1,
+          "right": [
+            "in:client:P(a,0)",
+            "in:client:P(a,0)"
+          ],
+          "right_value": 2
+        }
+      }
+    },
+    "positive_scope": "only current_b1_observer over the enumerated 62,528-history corpus; no general positive evolution claim",
+    "verdict": "the one corpus observer factors through both old encodings; the explicit E03 same-encoding pair conclusively refutes deterministic migration for the split authored-count observer; general evolution unsupported"
+  },
+  "experiment_timing": "excluded from deterministic evidence",
+  "may_rebuild_recipe_checks": {
+    "owed_port": {
+      "full_universe_checks": 82584,
+      "observed_owed_kinds_including_quiescent_sentinel": [
+        "-",
+        "ABSENT",
+        "ALREADY",
+        "DO",
+        "DONE",
+        "EMPTY",
+        "NO_DATA",
+        "PENDING",
+        "RAW",
+        "VAL",
+        "WHY"
+      ],
+      "recipe": "'-' for no owed output; 'action' iff owed_kind == 'DO'; otherwise 'client'"
+    },
+    "rule_on_0": {
+      "full_universe_checks": 82584,
+      "recipe": "return UTF-8 atom '0'; B1 admits only rule tables whose on_0 value is 0"
+    }
+  },
+  "merge_search": {
+    "active_vertices_by_reached_depth": {
+      "0": 1192,
+      "1": 1160,
+      "2": 248
+    },
+    "basis": "each pair has a selected bounded context with unequal exact observations; all shallower contexts and all same-depth tie-break candidates were checked; every minimum-crossing corpus history for each class was considered; canonical length-prefixed records hash pair/class/history/context/observations; the emitted winner map and deterministic tables permit reconstruction rather than only a hash commitment",
+    "context_tie_break": "earliest inbound depth; then first differing Observation.flattened coordinate (admission tuple, client tuple, action tuple; not temporal); then context token",
+    "corpus_class_pair_branches_enumerated": 709836,
+    "earliest_depth_counts": {
+      "0": 596382,
+      "1": 113306,
+      "2": 148
+    },
+    "executed_and_hashed_minimized_witnesses": 709836,
+    "history_selection": "per class retain every corpus history at that class's minimum crossing length; per pair exhaustively minimize total crossings, Levenshtein distance, left tokens, right tokens",
+    "maximum_minimum_length_histories_per_class": 4,
+    "pair_context_comparisons": 8983832,
+    "total_minimum_length_histories_retained": 1824,
+    "winning_context_count": 25,
+    "winning_context_uint16_map_encoding": "base64 of zlib(level=9) over big-endian uint16 context IDs in canonical triangular class-pair order",
+    "winning_context_uint16_map_raw_bytes": 1419672,
+    "winning_context_uint16_map_sha256": "4e4a93c868c7ccdd59f30acf921ac009605b3c4e234477f686d33cc17db5e3d4",
+    "winning_context_uint16_map_zlib_base64": "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",
+    "winning_context_uint16_map_zlib_bytes": 9785,
+    "witness_certificate_sha256": "643a4cc860a4de957d47be9aa144df1d8da482509157bc00fe60cf6597ba770d"
+  },
+  "specification_and_generated_artifact_sha256": "77d6a2b92664a94971680664883ca0fbb08221ed14d090d07defbe7ee46ad657",
+  "unknown_cells_used_for_equivalence": 0,
+  "unsupported": [
+    "actual process restart/restore and cross-process decoder initialization",
+    "fresh labels, payloads, keys, rules, or operations",
+    "malformed byte framing beyond reporting UNKNOWN",
+    "concurrency, input reordering, and non-serial delivery",
+    "time, expiry, billing, audit, authorization, and confidentiality",
+    "physical effects beyond crossing DO",
+    "capture failures and physical output-delivery ambiguity",
+    "resource deadlines and unbounded-domain storage growth",
+    "contract evolution that splits a prior quotient class",
+    "cryptographic proof of SHA-256 collision resistance"
+  ]
+}
