@@ -9,12 +9,17 @@ Current evidence artifacts:
 - an executable finite history/context enumerator and independent raw-trace
   oracle;
 - quotient and right-congruence computation;
-- candidate in-process encode/recover differential tests (process restart is a
-  separate unsupported probe until exercised);
+- union-domain proof enumeration (`enabled`/`disabled` are domain markers, not
+  unrecorded response frames);
+- candidate public `persist`/`recover` differential tests in B2, plus a
+  separate B3 fresh-process producer/consumer reconstruction probe;
 - exhaustive declared deletion/merge search with minimized witnesses;
 - fresh-domain, hidden-breaker, and archived-attack results;
 - simultaneous non-scalar candidate measurements and explicit unknowns.
 
-`EVIDENCE-B2.json` is the deterministic executed report. Actual process
-restart/restore remains unsupported in B2; its encode/recover checks are
-explicitly in-process.
+`EVIDENCE-B2.json` is the deterministic executed B2 report; its encode/recover
+checks are explicitly in-process. `PROCESS-RESTORE-B3.json` separately records
+producer-exit reconstruction in two fresh consumer processes per candidate over
+all 82,584 classes and 1,403,928 one-step operations per consumer. B3 does not
+establish crash/torn-write durability, unlike-runtime portability, or unlike
+physical realization.

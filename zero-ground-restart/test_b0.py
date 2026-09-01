@@ -61,7 +61,7 @@ from c0_oracle import (
     resume,
 )
 from run_b0 import (
-    candidate_observation,
+    candidate_proof_result,
     verify_boundary_step,
     verify_candidates,
     verify_deterministic_rebuild,
@@ -102,30 +102,34 @@ class OracleGoldenTests(unittest.TestCase):
         self.assertEqual(correct.crossed, (inbound("ACK", "k", port=ACTION),))
         self.assertFalse(accept(correct.snapshot, inbound("ACK", "k", port=ACTION)).legal)
 
-    def test_direct_attempt_at_owed_cut_is_disabled_until_resume(self) -> None:
+    def test_proposal_at_owed_cut_is_outside_domain_until_resume(self) -> None:
         prefix = history(inbound("P", "a", "0"))
         cut = append_legal(prefix, inbound("Q"))
         snapshot = replay(cut)
         direct = Context((inbound("O"),))
         scheduled = Context((RESUME, inbound("O"), RESUME))
         direct_result = evaluate_context(snapshot, direct)
-        self.assertEqual(direct_result.admission, (DISABLED,))
+        self.assertEqual(direct_result.domain_membership, (DISABLED,))
         self.assertEqual(direct_result.client, ())
         scheduled_result = evaluate_context(snapshot, scheduled)
-        self.assertEqual(scheduled_result.admission, (ENABLED,))
+        self.assertEqual(scheduled_result.domain_membership, (ENABLED,))
         self.assertEqual(
             scheduled_result.client,
             ("out:client:VAL(0)", "out:client:RAW(a,0)"),
         )
 
-    def test_union_admission_distinguishes_wrong_key(self) -> None:
+    def test_union_domain_distinguishes_wrong_key(self) -> None:
         pending_k = replay(history(inbound("P", "a", "0"), inbound("A", "k")))
         pending_l = replay(history(inbound("P", "a", "0"), inbound("A", "l")))
         context = Context((inbound("ACK", "k", port=ACTION),))
-        self.assertEqual(evaluate_context(pending_k, context).admission, (ENABLED,))
-        self.assertEqual(evaluate_context(pending_l, context).admission, (DISABLED,))
+        self.assertEqual(
+            evaluate_context(pending_k, context).domain_membership, (ENABLED,)
+        )
+        self.assertEqual(
+            evaluate_context(pending_l, context).domain_membership, (DISABLED,)
+        )
 
-    def test_admission_is_observed_before_boundary_crossing(self) -> None:
+    def test_rejected_proposal_is_a_proof_non_event(self) -> None:
         disabled = accept(INITIAL, inbound("ACK", "k", port=ACTION))
         self.assertFalse(disabled.legal)
         self.assertEqual(disabled.crossed, ())
@@ -325,11 +329,11 @@ class HarnessTests(unittest.TestCase):
         zero = BoundedResiduals(future_contexts(0))
         one = BoundedResiduals(future_contexts(1))
         self.assertEqual(
-            (zero.max_inbound_attempts, zero.max_resume_steps, zero.max_total_steps),
+            (zero.max_inbound_proposals, zero.max_resume_steps, zero.max_total_steps),
             (0, 1, 1),
         )
         self.assertEqual(
-            (one.max_inbound_attempts, one.max_resume_steps, one.max_total_steps),
+            (one.max_inbound_proposals, one.max_resume_steps, one.max_total_steps),
             (1, 2, 3),
         )
         left = replay(history(inbound("R", "u", "0", "1")))
@@ -341,7 +345,7 @@ class HarnessTests(unittest.TestCase):
         fingerprints: dict[int, tuple[object, ...]] = {}
         for index, part in enumerate(self.congruence.partitions):
             value = tuple(
-                (edge.observation, self.congruence.partitions[edge.target])
+                (edge.proof_signature, self.congruence.partitions[edge.target])
                 for edge in self.congruence.edges[index]
             )
             self.assertEqual(fingerprints.setdefault(part, value), value)
@@ -356,7 +360,7 @@ class HarnessTests(unittest.TestCase):
         self.assertEqual(checks["in_process_encode_recover_round_trips"], 125056)
         self.assertEqual(checks["ordinal_encoding_collisions"], 0)
         self.assertEqual(checks["representative_encoding_collisions"], 0)
-        self.assertGreater(checks["decoded_context_checks"], 0)
+        self.assertGreater(checks["decoded_proof_context_checks"], 0)
 
     def test_ten_kind_cut_encode_recover_matrix(self) -> None:
         pending = history(inbound("P", "a", "0"), inbound("A", "k"))
@@ -399,7 +403,10 @@ class HarnessTests(unittest.TestCase):
             # A fresh inbound is disabled until the owed output crosses.
             probe = inbound("P", "b", "1")
             self.assertFalse(accept(cut, probe).legal)
-            self.assertEqual(self.machine.input_step(expected_key, probe).admission, DISABLED)
+            self.assertEqual(
+                self.machine.input_step(expected_key, probe).domain_membership,
+                DISABLED,
+            )
 
             # It crosses once; subsequent resumes do not duplicate it.
             first = resume(cut)
@@ -408,6 +415,8 @@ class HarnessTests(unittest.TestCase):
             self.assertEqual(resume(first.snapshot).crossed, ())
             candidate_first = self.machine.resume_step(expected_key)
             candidate_second = self.machine.resume_step(candidate_first.next_key)
+            self.assertIsNone(candidate_first.domain_membership)
+            self.assertIsNone(candidate_second.domain_membership)
             self.assertEqual(len(candidate_first.client) + len(candidate_first.action), 1)
             self.assertEqual(candidate_second.client + candidate_second.action, ())
             if read_only:
@@ -435,7 +444,7 @@ class HarnessTests(unittest.TestCase):
         self.assertEqual(checks["ordinal_full_universe_distinct_encodings"], 82584)
         self.assertEqual(checks["representative_full_universe_distinct_encodings"], 82584)
         self.assertEqual(
-            checks["full_universe_resume_and_16_input_differential_checks"],
+            checks["full_universe_resume_and_16_input_domain_differential_checks"],
             82584 * 17,
         )
 

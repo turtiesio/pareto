@@ -52,12 +52,12 @@ from c0_core import build_witness_core
 from c0_oracle import ACTION, CLIENT, INPUTS, Frame, Snapshot, accept, inbound, replay, resume
 
 
-def candidate_observation(
+def candidate_proof_result(
     machine: QuotientBoundaryMachine,
     key: tuple[str, ...],
     context: Context,
 ) -> Observation:
-    admission: list[str] = []
+    domain_membership: list[str] = []
     client: list[str] = []
     action: list[str] = []
     current = key
@@ -67,11 +67,13 @@ def candidate_observation(
         else:
             assert isinstance(operation, Frame)
             step = machine.input_step(current, operation)
-            admission.append(step.admission)
+            if step.domain_membership is None:
+                raise AssertionError("input proposal lacks a domain-membership marker")
+            domain_membership.append(step.domain_membership)
         client.extend(step.client)
         action.extend(step.action)
         current = step.next_key
-    return Observation(tuple(admission), tuple(client), tuple(action))
+    return Observation(tuple(domain_membership), tuple(client), tuple(action))
 
 
 def verify_boundary_step(
@@ -88,7 +90,8 @@ def verify_boundary_step(
         raw_client = tuple(frame.token() for frame in raw.crossed if frame.port == CLIENT)
         raw_action = tuple(frame.token() for frame in raw.crossed if frame.port == ACTION)
         if (
-            candidate.client != raw_client
+            candidate.domain_membership is not None
+            or candidate.client != raw_client
             or candidate.action != raw_action
             or candidate.next_key != machine.class_key(raw.snapshot)
         ):
@@ -98,9 +101,9 @@ def verify_boundary_step(
     assert isinstance(operation, Frame)
     raw = accept(snapshot, operation)
     candidate = machine.input_step(key, operation)
-    expected_admission = ENABLED if raw.legal else DISABLED
-    if candidate.admission != expected_admission:
-        raise AssertionError("candidate admission disagrees with raw oracle")
+    expected_domain_membership = ENABLED if raw.legal else DISABLED
+    if candidate.domain_membership != expected_domain_membership:
+        raise AssertionError("candidate next-crossing domain disagrees with raw oracle")
     if candidate.next_key != machine.class_key(raw.snapshot):
         raise AssertionError("candidate transition disagrees with raw oracle")
 
@@ -148,7 +151,7 @@ def verify_candidates(
             verify_boundary_step(machine, snapshot, frame)
             transition_checks += 1
 
-    decoded_context_checks = 0
+    decoded_proof_context_checks = 0
     contexts_to_check = contexts if check_all_contexts else contexts[:: max(1, len(contexts) // 64)]
     for snapshot in unique_snapshots:
         key = machine.class_key(snapshot)
@@ -156,17 +159,17 @@ def verify_candidates(
 
         for context in contexts_to_check:
             expected = evaluate_context(snapshot, context)
-            actual = candidate_observation(machine, key, context)
+            actual = candidate_proof_result(machine, key, context)
             if actual != expected:
                 raise AssertionError(
-                    f"decoded context differs: {context.token()}\n{actual}\n{expected}"
+                    f"decoded proof context differs: {context.token()}\n{actual}\n{expected}"
                 )
-            decoded_context_checks += 1
+            decoded_proof_context_checks += 1
 
     return {
         "in_process_encode_recover_round_trips": encode_recover_checks,
-        "one_step_decoder_checks": transition_checks,
-        "decoded_context_checks": decoded_context_checks,
+        "one_step_domain_transition_checks": transition_checks,
+        "decoded_proof_context_checks": decoded_proof_context_checks,
         "unique_cut_snapshots": len(unique_snapshots),
         "ordinal_encoding_collisions": ordinal_collisions,
         "representative_encoding_collisions": representative_collisions,
@@ -211,7 +214,9 @@ def verify_full_universe_encodings(
         "representative_full_universe_in_process_encode_recover": expected,
         "ordinal_full_universe_distinct_encodings": len(ordinal_values),
         "representative_full_universe_distinct_encodings": len(representative_values),
-        "full_universe_resume_and_16_input_differential_checks": boundary_differential_checks,
+        "full_universe_resume_and_16_input_domain_differential_checks": (
+            boundary_differential_checks
+        ),
     }
 
 
@@ -273,8 +278,8 @@ def witness_json(value: object) -> object:
     if isinstance(value, str):
         return value
     data = asdict(value)  # type: ignore[arg-type]
-    data["left_observation"] = asdict(value.left_observation)  # type: ignore[attr-defined]
-    data["right_observation"] = asdict(value.right_observation)  # type: ignore[attr-defined]
+    data["left_proof_result"] = asdict(value.left_proof_result)  # type: ignore[attr-defined]
+    data["right_proof_result"] = asdict(value.right_proof_result)  # type: ignore[attr-defined]
     return data
 
 
@@ -448,7 +453,7 @@ def run(
             "label": "deterministic textual proxies, not allocator/disk-format measurements",
         },
         "generated_table": {
-            "explicit_transition_output_cells": table_cells,
+            "explicit_domain_transition_output_cells": table_cells,
             "approximate_textual_bytes": machine.approximate_table_bytes(),
             "note": "textual proxy only; Python objects, allocator, indexes, interpreter, and storage framing are additional",
         },
@@ -468,7 +473,7 @@ def run(
         "tcb_and_dependencies": [
             "boundary capture and durable cut mechanism (not implemented here)",
             "CPython interpreter and Python standard library",
-            "CONTRACT-B1 framing, admission selector, and admission observation choices",
+            "CONTRACT-B1 framing, next-crossing domain, and domain selector",
             "raw-trace parser/replay oracle",
             "finite-state enumerator and partition refinement",
             "canonical representative search and rank/table generator",
@@ -544,7 +549,7 @@ def run(
         ),
         "bounds": {
             "max_history_inbound_frames": max_inbound,
-            "max_future_inbound_attempts": max_future_inputs,
+            "max_future_inbound_domain_proposals": max_future_inputs,
             "normalized_future_contexts": len(contexts),
             "boundary_prefix_cuts": len(corpus.histories),
         },
@@ -590,10 +595,10 @@ def run(
             "history_selection": pair_witnesses.history_selection,
             "context_tie_break": pair_witnesses.tie_break,
             "basis": (
-                "each pair has a selected bounded context with unequal exact observations; "
+                "each pair has a selected bounded context with unequal exact proof results; "
                 "all shallower contexts and all same-depth tie-break candidates were checked; "
                 "every minimum-crossing corpus history for each class was considered; canonical "
-                "length-prefixed records hash pair/class/history/context/observations; the emitted "
+                "length-prefixed records hash pair/class/history/context/proof results; the emitted "
                 "winner map and deterministic tables permit reconstruction rather than only a hash "
                 "commitment"
             ),
@@ -678,7 +683,7 @@ def main() -> None:
     parser.add_argument(
         "--sample-context-check",
         action="store_true",
-        help="sample decoded contexts; all enumeration and quotient work remains exact",
+        help="sample decoded proof contexts; enumeration and quotient work remains exact",
     )
     parser.add_argument(
         "--deterministic",

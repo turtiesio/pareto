@@ -36,36 +36,43 @@ out to be the restart charter itself, not an older solution. Its replay added
 acceptance attacks but no inherited structure or concrete old counterexample.
 
 Fresh breaking then invalidated B0 as an executable specification: several
-frames and ports were undefined; intersection-only admission could hide a
-distinction; the history horizon was not transition-closed; `UNKNOWN` could not
-serve as an equivalence value; canonical byte order was unspecified; and one
-oracle path created common-mode risk. B0 remains immutable evidence of those
-failures. `CONTRACT-B1.md` totalizes only the finite experiment, using union
-admission, explicit `disabled`, exact frame bytes/order, complete cuts, and no
-unknown cells in equivalence.
+frames and ports were undefined; intersection-only continuation domains could
+hide a distinction; the history horizon was not transition-closed; `UNKNOWN`
+could not serve as an equivalence value; canonical byte order was unspecified;
+and one oracle path created common-mode risk. B0 remains immutable evidence of
+those failures. `CONTRACT-B1.md` totalizes only the finite experiment, using
+union-domain proof enumeration, exact frame bytes/order, complete cuts, and no
+unknown cells in equivalence. Its `enabled`/`disabled` values are proof markers
+for next-crossing-domain membership, never unrecorded physical response frames.
 
 ## Executed scope
 
 The deterministic B2 evidence file has SHA-256
-`18201ff14c0be6fddb822da4a36f1ba669fed23f9a3a0a66fd6cc623708fe67b`.
+`12bfedbf22edbbda1b895073e46e773c2758b23a974c68321351aa15a6d8ff49`.
+The deterministic B3 fresh-process evidence file has SHA-256
+`828a794a1ffa7c40e30c24ba1ba2f0452353209b292d9ec8ac20c294f1072fe3`.
 Its generated specification/table artifact digest is
-`77d6a2b92664a94971680664883ca0fbb08221ed14d090d07defbe7ee46ad657`.
+`b38fc5d3e57fd0117b9ee1fd4c0d0686833115db9ce22dd5950fe6fb41a09339`.
 
 | Exhausted or checked item | Result |
 |---|---:|
 | legal boundary-prefix histories/cuts through four inbound frames | 62,528 |
-| normalized futures through two inbound attempts | 2,114 |
+| normalized futures through two inbound domain proposals | 2,114 |
 | distinct tested cut classes | 1,192 |
-| decoded context checks | 2,519,888 |
+| decoded proof-context checks | 2,519,888 |
 | corpus in-process encode/recover round trips | 125,056 |
 | finite-domain quiescent states/classes | 10,420 / 10,420 |
 | complete finite-domain boundary-phase classes | 82,584 |
 | full-universe in-process public `persist`/`recover` checks per encoding | 82,584 |
-| full-universe raw-oracle differential checks (`resume` + 16 inputs) | 1,403,928 |
+| full-universe raw-oracle differential checks (`resume` + 16 domain proposals) | 1,403,928 |
+| B3 fresh-process state records persisted per encoding | 82,584 |
+| B3 fresh-process state records reconstructed per encoding | 82,584 × 2 consumer runs |
+| B3 fresh-process one-step checks per encoding | 1,403,928 × 2 consumer runs |
 | declared component projections | all 1,024 |
 | unordered corpus-class merges with executed minimized witnesses | 709,836 |
 | minimum-length history candidates retained for exact pair minimization | 1,824 (maximum 4/class) |
 | tests | 45 / 45 passed |
+| B3 framing/evidence tests | 7 / 7 passed |
 
 The bounded residual partition and the stable finite-domain partition agree on
 all 1,192 tested cuts. Stable refinement takes two rounds and passes the
@@ -111,8 +118,8 @@ does not establish a field, type, constructor, record, or layer.
 | current payload distinction | `P(a,0)` / `P(a,1)` | `A(k);resume` emits different `DO` payload/result |
 | selected explanatory label | empty / `R(u,0,1)` | `P(a,0);A(k);resume` emits label `d` / `u` |
 | latent behavior on input 1 | `R(u,0,0)` / `R(u,0,1)` | `P(a,1);A(k);resume` emits result `0` / `1` |
-| action responsibility for `k` | `P(a,0)` / the same plus crossed `DO(k,…)` | `ACK(k)` is disabled / enabled |
-| action responsibility for `l` | `P(a,0)` / the same plus crossed `DO(l,…)` | `ACK(l)` is disabled / enabled |
+| action responsibility for `k` | `P(a,0)` / the same plus crossed `DO(k,…)` | only the latter next-crossing domain contains `ACK(k)` |
+| action responsibility for `l` | `P(a,0)` / the same plus crossed `DO(l,…)` | only the latter next-crossing domain contains `ACK(l)` |
 | owed-output kind | no-content `A(k)?` / `S(k)?` | `resume` emits `NO_DATA` / `ABSENT` |
 | owed-output arguments | no-content `A(k)?` / `A(l)?` | `resume` emits key `k` / `l` |
 
@@ -125,7 +132,9 @@ opaque coordinates:
 - an action retains its captured decision when current content later changes;
 - action-key association changes enabledness and status;
 - an owed output versus the same already-crossed output changes whether
-  `resume` emits at a logical cut. Actual process restart was not exercised.
+  `resume` emits at a logical cut. Fresh-process reconstruction of every
+  generated logical cut is exercised in B3; physical output-delivery recovery
+  and durable crash semantics remain unsupported.
 
 The ordinal candidate demonstrates that none of these responsibilities entails
 a dedicated constructor: all are jointly encoded in an otherwise meaningless
@@ -192,8 +201,8 @@ added to the permitted future language.
 | human cognition | opaque without tooling; actual burden `UNKNOWN` | surface is inspectable but synthetic-history confusion risk; actual burden `UNKNOWN` |
 | authoring burden | external B1 authoring unchanged; table/migration maintenance unmeasured | external B1 authoring unchanged; canonicalization maintenance unmeasured |
 | query/navigation | constant table lookup after machinery is available | parse/replay proportional to at most 236 bytes here; rebuilt index optional |
-| runtime | finite table operations are O(1) | in-process decode/replay is O(representative bytes/crossings); process restart untested |
-| shared storage | 238,884 explicit transition/output cells; about 19,635,161 bytes as an incomplete textual-table proxy | source/parser plus canonicalization machinery; storing all representatives also moves substantial state into a shared map |
+| runtime | finite table operations are O(1); B3 reconstruction ran in fresh CPython processes on the same host, without a startup benchmark | decode/replay is O(representative bytes/crossings); B3 reconstruction ran in fresh CPython processes on the same host, without a startup benchmark |
+| shared storage | 238,884 explicit domain/transition/output cells; about 19,635,161 bytes as an incomplete textual-table proxy | source/parser plus canonicalization machinery; storing all representatives also moves substantial state into a shared map |
 | operations | exact rank/table/spec coordination and migration | exact syntax/order/spec coordination and canonical recovery |
 | TCB | capture/durability, runtime, spec, quotient generator, table, decoder, verifier, medium | capture/durability, runtime, spec, parser, replay oracle, canonicalizer, verifier, medium |
 | evolution | one corpus observer factored through; a demonstrated splitting addition cannot migrate | identical tested boundary; representative cannot recover the demonstrated split past |
@@ -209,8 +218,8 @@ unmeasured human/physical dimensions prevent a dominance claim.
 The storage figures are non-additive, incomplete proxies. They exclude Python
 objects and allocator overhead, interpreter and OS, filesystem framing, durable
 boundary capture, packaging, logs, redundancy, and physical media. The
-executable spec/verifier inventory is separately reported as 129,277 bytes and
-3,211 physical lines across eight files; that too is not a total deployment
+executable spec/verifier inventory is separately reported as 131,089 bytes and
+3,253 physical lines across eight files; that too is not a total deployment
 size.
 
 A literal trace is a third useful attack baseline. It preserves B1 but retains
@@ -231,11 +240,13 @@ therefore incompatible.
 
 The ordinal/table and text/replay implementations were differentially executed
 against the same oracle. This validates two unlike software encodings and their
-abstraction to one quotient. It is **not** a cross-physical-media experiment.
+abstraction to one quotient. B3 additionally validates controlled file handoff
+from an exited producer to fresh consumers on that same runtime and host. It is
+**not** a cross-physical-media experiment.
 Flash, optical, punched/mechanical, or other substrate interchangeability,
 including their failure modes, remains `UNKNOWN` until actually realized and
-run against the same histories, actual process restarts, migrations, and observation
-comparator.
+run against the same histories across unlike media/runtimes, migrations,
+relevant failure conditions, and the observation comparator.
 
 ## Where the complexity went
 
@@ -247,11 +258,16 @@ comparator.
   specification.
 - Constant-rule deletion moved the constant and its validity range into the
   specification.
+- A dedicated rejection channel was not deleted: B1 declares rejected proposals
+  to be proof-level non-events. Domain selection still lives in specification,
+  executable selector code, and TCB. A real refusal response would cross the
+  boundary, enlarge history, and require a new experiment.
 - Digest deletion removes a same-runtime artifact-mismatch guard and moves exact
   artifact selection into deployment operations and TCB; it is not a general
   portability mechanism.
 - Index/cache deletion moves work into recomputation. The measurement only
-  clears an in-process replay cache; no fresh-process startup measurement occurred.
+  clears an in-process replay cache; B3 executes fresh processes but records no
+  startup benchmark.
   B1 declares no deadline, so this is informationally rebuildable but not
   operationally free.
 - Human-readable provenance deletion moves interpretation to tools or people;
@@ -273,8 +289,9 @@ comparator.
   deadlines, concurrency/reordering, time, audit, authorization, privacy,
   malformed/fresh values, and physical effects beyond crossed `DO` are
   unsupported.
-- Actual cognition, human authoring/error rates, recovery operations, energy,
-  and unlike physical media are unmeasured or unsupported.
+- Actual cognition, human authoring/error rates, operational recovery procedures
+  beyond B3's controlled file handoff, energy, unlike runtimes, and unlike
+  physical media are unmeasured or unsupported.
 - Literal goldens and a deliberate corrupted-table test reduce common-mode
   risk, but the oracle, candidates, tests, CPython runtime, and host still share
   assumptions.

@@ -1,7 +1,7 @@
 {
   "bounds": {
     "boundary_prefix_cuts": 62528,
-    "max_future_inbound_attempts": 2,
+    "max_future_inbound_domain_proposals": 2,
     "max_history_inbound_frames": 4,
     "normalized_future_contexts": 2114
   },
@@ -10,11 +10,11 @@
     "artifact_digest_equal_after_clean_rebuild": true,
     "canonical_representatives_equal_after_clean_rebuild": true,
     "clean_rebuilds": 1,
-    "decoded_context_checks": 2519888,
+    "decoded_proof_context_checks": 2519888,
     "full_universe_classes": 82584,
-    "full_universe_resume_and_16_input_differential_checks": 1403928,
+    "full_universe_resume_and_16_input_domain_differential_checks": 1403928,
     "in_process_encode_recover_round_trips": 125056,
-    "one_step_decoder_checks": 20264,
+    "one_step_domain_transition_checks": 20264,
     "ordinal_encoding_collisions": 0,
     "ordinal_full_universe_distinct_encodings": 82584,
     "ordinal_full_universe_in_process_encode_recover": 82584,
@@ -27,10 +27,10 @@
   "candidate_measurements": {
     "artifact_inventory": [
       {
-        "bytes": 5120,
+        "bytes": 5618,
         "file": "CONTRACT-B1.md",
         "inventory_role": "artifact-bound specification/generator",
-        "physical_lines": 84
+        "physical_lines": 90
       },
       {
         "bytes": 8768,
@@ -39,16 +39,16 @@
         "physical_lines": 263
       },
       {
-        "bytes": 34877,
+        "bytes": 35414,
         "file": "c0_experiment.py",
         "inventory_role": "artifact-bound specification/generator",
-        "physical_lines": 950
+        "physical_lines": 968
       },
       {
-        "bytes": 10810,
+        "bytes": 10975,
         "file": "c0_candidates.py",
         "inventory_role": "artifact-bound specification/generator",
-        "physical_lines": 283
+        "physical_lines": 287
       },
       {
         "bytes": 8006,
@@ -63,22 +63,22 @@
         "physical_lines": 58
       },
       {
-        "bytes": 30546,
+        "bytes": 30887,
         "file": "run_b0.py",
         "inventory_role": "verification/evidence code not included in candidate artifact digest",
-        "physical_lines": 697
+        "physical_lines": 702
       },
       {
-        "bytes": 29258,
+        "bytes": 29529,
         "file": "test_b0.py",
         "inventory_role": "verification/evidence code not included in candidate artifact digest",
-        "physical_lines": 657
+        "physical_lines": 666
       }
     ],
     "artifact_inventory_totals": {
-      "bytes": 129277,
+      "bytes": 131089,
       "files": 8,
-      "physical_lines": 3211,
+      "physical_lines": 3253,
       "scope": "bound specification/generator plus all executable verifier/evidence files"
     },
     "benchmarks": {
@@ -99,7 +99,7 @@
     },
     "generated_table": {
       "approximate_textual_bytes": 19635161,
-      "explicit_transition_output_cells": 238884,
+      "explicit_domain_transition_output_cells": 238884,
       "note": "textual proxy only; Python objects, allocator, indexes, interpreter, and storage framing are additional"
     },
     "human_and_physical": {
@@ -131,7 +131,7 @@
     "tcb_and_dependencies": [
       "boundary capture and durable cut mechanism (not implemented here)",
       "CPython interpreter and Python standard library",
-      "CONTRACT-B1 framing, admission selector, and admission observation choices",
+      "CONTRACT-B1 framing, next-crossing domain, and domain selector",
       "raw-trace parser/replay oracle",
       "finite-state enumerator and partition refinement",
       "canonical representative search and rank/table generator",
@@ -173,24 +173,24 @@
           "left": [
             "in:client:P(a,0)"
           ],
-          "left_observation": {
+          "left_proof_result": {
             "action": [],
-            "admission": [
+            "client": [],
+            "domain_membership": [
               "disabled"
-            ],
-            "client": []
+            ]
           },
           "right": [
             "in:client:P(a,0)",
             "in:client:A(k)",
             "out:action:DO(k,a,0,d,0)"
           ],
-          "right_observation": {
+          "right_proof_result": {
             "action": [],
-            "admission": [
+            "client": [],
+            "domain_membership": [
               "enabled"
-            ],
-            "client": []
+            ]
           },
           "score": [
             4,
@@ -217,24 +217,24 @@
           "left": [
             "in:client:P(a,0)"
           ],
-          "left_observation": {
+          "left_proof_result": {
             "action": [],
-            "admission": [
+            "client": [],
+            "domain_membership": [
               "disabled"
-            ],
-            "client": []
+            ]
           },
           "right": [
             "in:client:P(a,0)",
             "in:client:A(l)",
             "out:action:DO(l,a,0,d,0)"
           ],
-          "right_observation": {
+          "right_proof_result": {
             "action": [],
-            "admission": [
+            "client": [],
+            "domain_membership": [
               "enabled"
-            ],
-            "client": []
+            ]
           },
           "score": [
             4,
@@ -261,26 +261,26 @@
           "left": [
             "in:client:P(a,0)"
           ],
-          "left_observation": {
+          "left_proof_result": {
             "action": [
               "out:action:DO(k,a,0,d,0)"
             ],
-            "admission": [
+            "client": [],
+            "domain_membership": [
               "enabled"
-            ],
-            "client": []
+            ]
           },
           "right": [
             "in:client:P(a,1)"
           ],
-          "right_observation": {
+          "right_proof_result": {
             "action": [
               "out:action:DO(k,a,1,d,1)"
             ],
-            "admission": [
+            "client": [],
+            "domain_membership": [
               "enabled"
-            ],
-            "client": []
+            ]
           },
           "score": [
             2,
@@ -305,26 +305,26 @@
           "left": [
             "in:client:P(a,0)"
           ],
-          "left_observation": {
+          "left_proof_result": {
             "action": [
               "out:action:DO(k,a,0,d,0)"
             ],
-            "admission": [
+            "client": [],
+            "domain_membership": [
               "enabled"
-            ],
-            "client": []
+            ]
           },
           "right": [
             "in:client:P(b,0)"
           ],
-          "right_observation": {
+          "right_proof_result": {
             "action": [
               "out:action:DO(k,b,0,d,0)"
             ],
-            "admission": [
+            "client": [],
+            "domain_membership": [
               "enabled"
-            ],
-            "client": []
+            ]
           },
           "score": [
             2,
@@ -349,22 +349,22 @@
           "left": [
             "in:client:A(k)"
           ],
-          "left_observation": {
+          "left_proof_result": {
             "action": [],
-            "admission": [],
             "client": [
               "out:client:NO_DATA(k)"
-            ]
+            ],
+            "domain_membership": []
           },
           "right": [
             "in:client:A(l)"
           ],
-          "right_observation": {
+          "right_proof_result": {
             "action": [],
-            "admission": [],
             "client": [
               "out:client:NO_DATA(l)"
-            ]
+            ],
+            "domain_membership": []
           },
           "score": [
             2,
@@ -389,22 +389,22 @@
           "left": [
             "in:client:A(k)"
           ],
-          "left_observation": {
+          "left_proof_result": {
             "action": [],
-            "admission": [],
             "client": [
               "out:client:NO_DATA(k)"
-            ]
+            ],
+            "domain_membership": []
           },
           "right": [
             "in:client:S(k)"
           ],
-          "right_observation": {
+          "right_proof_result": {
             "action": [],
-            "admission": [],
             "client": [
               "out:client:ABSENT(k)"
-            ]
+            ],
+            "domain_membership": []
           },
           "score": [
             2,
@@ -432,28 +432,28 @@
         "witness": {
           "future": "in:client:P(a,0);in:client:A(k);resume",
           "left": [],
-          "left_observation": {
+          "left_proof_result": {
             "action": [
               "out:action:DO(k,a,0,d,0)"
             ],
-            "admission": [
+            "client": [],
+            "domain_membership": [
               "enabled",
               "enabled"
-            ],
-            "client": []
+            ]
           },
           "right": [
             "in:client:R(u,0,1)"
           ],
-          "right_observation": {
+          "right_proof_result": {
             "action": [
               "out:action:DO(k,a,0,u,0)"
             ],
-            "admission": [
+            "client": [],
+            "domain_membership": [
               "enabled",
               "enabled"
-            ],
-            "client": []
+            ]
           },
           "score": [
             1,
@@ -481,28 +481,28 @@
           "left": [
             "in:client:R(u,0,0)"
           ],
-          "left_observation": {
+          "left_proof_result": {
             "action": [
               "out:action:DO(k,a,1,u,0)"
             ],
-            "admission": [
+            "client": [],
+            "domain_membership": [
               "enabled",
               "enabled"
-            ],
-            "client": []
+            ]
           },
           "right": [
             "in:client:R(u,0,1)"
           ],
-          "right_observation": {
+          "right_proof_result": {
             "action": [
               "out:action:DO(k,a,1,u,1)"
             ],
-            "admission": [
+            "client": [],
+            "domain_membership": [
               "enabled",
               "enabled"
-            ],
-            "client": []
+            ]
           },
           "score": [
             2,
@@ -893,8 +893,8 @@
       "1": 1160,
       "2": 248
     },
-    "basis": "each pair has a selected bounded context with unequal exact observations; all shallower contexts and all same-depth tie-break candidates were checked; every minimum-crossing corpus history for each class was considered; canonical length-prefixed records hash pair/class/history/context/observations; the emitted winner map and deterministic tables permit reconstruction rather than only a hash commitment",
-    "context_tie_break": "earliest inbound depth; then first differing Observation.flattened coordinate (admission tuple, client tuple, action tuple; not temporal); then context token",
+    "basis": "each pair has a selected bounded context with unequal exact proof results; all shallower contexts and all same-depth tie-break candidates were checked; every minimum-crossing corpus history for each class was considered; canonical length-prefixed records hash pair/class/history/context/proof results; the emitted winner map and deterministic tables permit reconstruction rather than only a hash commitment",
+    "context_tie_break": "earliest inbound depth; then first differing Observation.flattened coordinate (proof-domain tuple, client tuple, action tuple; not temporal); then context token",
     "corpus_class_pair_branches_enumerated": 709836,
     "earliest_depth_counts": {
       "0": 596382,
@@ -914,7 +914,7 @@
     "winning_context_uint16_map_zlib_bytes": 9785,
     "witness_certificate_sha256": "643a4cc860a4de957d47be9aa144df1d8da482509157bc00fe60cf6597ba770d"
   },
-  "specification_and_generated_artifact_sha256": "77d6a2b92664a94971680664883ca0fbb08221ed14d090d07defbe7ee46ad657",
+  "specification_and_generated_artifact_sha256": "b38fc5d3e57fd0117b9ee1fd4c0d0686833115db9ce22dd5950fe6fb41a09339",
   "unknown_cells_used_for_equivalence": 0,
   "unsupported": [
     "actual process restart/restore and cross-process decoder initialization",

@@ -7,18 +7,23 @@ contract. It is not the architecture and does not establish global minimality.
 
 - Every legal boundary prefix with at most four inbound crossings is generated;
   cuts after every completed crossing are retained.
-- Union-admission residual behavior covers every normalized scheduler placement
-  around at most two inbound attempts. `disabled` is observable; `UNKNOWN` is
+- Union-domain residual behavior covers every normalized scheduler placement
+  around at most two proposed inbound crossings. Equivalence compares the exact
+  next-crossing domain before comparing enabled successors; `UNKNOWN` is
   excluded from equivalence.
-- Admission is observed before crossing: rejected attempts do not join history.
-  The selector and admission observation mechanism are charged to the TCB.
+- `enabled` and `disabled` are proof-oracle markers for membership in that
+  domain, not emitted observations. A rejected proposal is a non-event outside
+  boundary history. The domain selector is charged to the TCB.
 - A separate stable right congruence closes the entire finite-value quiescent
   turn machine and its one-output cut states.
 - Ordinal and canonical-representative encodings call their public `persist`
   and `recover` paths in-process for all 82,584 generated boundary classes.
-  `resume` and all sixteen input attempts are differentially checked against
-  the independent raw-trace oracle at every class (1,403,928 checks). No
-  process restart is exercised.
+  `resume` and all sixteen input-domain proposals are differentially checked
+  against the independent raw-trace oracle at every class (1,403,928 checks).
+- `PROCESS-RESTORE-B3.json` separately persists all 82,584 classes in a
+  producer that exits, then reconstructs them and checks all 1,403,928 one-step
+  behaviors in two fresh consumer processes per candidate against the
+  independent raw oracle.
 - A clean second enumeration/refinement/table build reproduces the exact
   artifact digest, rank ordering, and canonical representatives.
 - The two sound direct deletions have exact exhaustive rebuild checks:
@@ -52,9 +57,12 @@ reordering, time, audit, authorization, privacy, capture/torn-write failures,
 physical output-delivery races, effects beyond crossing `DO`, resource
 deadlines, unbounded key growth, human cognition/error, physical-media
 interchangeability, and class-splitting contract evolution are unsupported.
-Actual process restart/restore is also unsupported: every current encode/recover
-check executes inside one CPython process with already-constructed code and
-artifacts.
+B3 exercises fresh-process reconstruction using distinct newly-created
+directories on one host/runtime. It does not establish power-loss,
+crash/torn-write, or physical durability semantics, cross-runtime portability,
+or unlike physical realization; mount and network isolation are not enforced.
+The artifact digest does not integrity-bind a state's payload, so protection
+outside B3's parent stream-hash comparison remains an operational responsibility.
 
 The software differential test is not a cross-physical-realization test.
 Benchmark timings are measurement-only and are excluded from deterministic
@@ -77,6 +85,8 @@ specification/runtime defects remain possible.
 
 ```sh
 python3 -m unittest -v zero-ground-restart/test_b0.py
+python3 -m unittest -v zero-ground-restart/test_process_probe.py
 python3 zero-ground-restart/run_b0.py --deterministic
 python3 zero-ground-restart/run_b0.py
+python3 zero-ground-restart/c0_process_probe.py orchestrate
 ```

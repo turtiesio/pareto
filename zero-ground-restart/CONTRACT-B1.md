@@ -14,33 +14,39 @@ chooses among meanings that B0 did not uniquely determine, results are labeled
   exactly one outbound frame.
 - An `ACK(key)` is legal only while that same key is pending, after its `DO`
   frame has crossed. Missing-key, wrong-key, and already-done acknowledgements
-  produce the distinguished observation `disabled` and change no state.
+  are outside the declared next-crossing domain and change no state.
 - Client requests and responses cross the `client` port. `DO` and `ACK` cross
-  the `action` port. `admission` is a distinct, pre-crossing observation
-  projection. An attempted frame first produces `enabled` or `disabled` there.
-  Only an enabled frame crosses the declared boundary and joins the history; a
-  disabled attempt does not cross and changes no trace-derived state. Exact
-  client-port traces, action-port traces, and admission observations are
-  compared. The admission selector and observation mechanism are part of the
-  TCB rather than free boundary behavior.
+  the `action` port. Let `A` be the common frozen set of proposed inbound
+  frames. For each legal crossing history `h`, the next-crossing domain is
+  `D(h) = {a in A | h;a is a legal crossing history}`. A proposal is a
+  conformance-test choice, not itself a system interaction. The proof oracle
+  records `enabled` when a proposal belongs to `D(h)` and `disabled` otherwise;
+  these are domain-membership markers, not emitted frames or a second boundary
+  channel. Only a member of `D(h)` crosses and joins history. Exact client-port
+  traces, action-port traces, and equality of `D(h)` are compared. The selector
+  enforcing `D` is part of the TCB rather than free boundary behavior.
 - The protocol is serial. While an output is owed, no inbound frame is a legal
   next boundary crossing. `resume` is a scheduler operation, not a boundary
   frame. It crosses the one owed output, or crosses nothing when quiescent.
   Restarts are also not boundary frames and do not alter state or observations.
-- Future comparison uses **union admission**: every input from the frozen finite
-  grammar is attempted on both sides. A rejected attempt yields the admission
-  observation `disabled`, crosses no boundary frame, and leaves the
-  trace-derived state unchanged. Thus differing admission domains cannot be
-  hidden by intersecting only jointly enabled futures.
-- At every cut, the context may choose `resume` or may directly attempt an
-  inbound frame. A direct inbound attempt while output is owed is `disabled`;
-  it does not silently resume first. The bounded enumerator includes zero, one,
-  or two input attempts and every normalized placement of `resume` before,
-  between, and after them. Consecutive quiescent resumes are observationally
+- Future comparison uses **union-domain proof enumeration**: every proposal
+  from `A` is checked on both sides. The proof marker is `disabled` when the
+  proposal is outside a side's domain; no operational attempt, response, or
+  boundary event is thereby asserted. Equivalence first requires equal domains,
+  so differing enabled continuations cannot be hidden by intersecting only the
+  two sides' jointly enabled futures.
+- At every cut, the proof context may choose `resume` or query whether an
+  inbound frame is in the next-crossing domain. While output is owed every such
+  frame is outside that domain; the proof query does not silently resume first.
+  The bounded enumerator includes zero, one, or two domain proposals and every
+  normalized placement of `resume` before, between, and after them. Continuing
+  after a common `disabled` marker is proof-level normalization: the rejected
+  proposal was a non-event and can be deleted. A first unequal marker already
+  separates the histories. Consecutive quiescent resumes are observationally
   idempotent and have one representative. For this deterministic oracle,
   enumerating these words covers adaptive contexts of the same bounds: every
   adaptive branch has one determined path.
-- Bounded residual signatures use at most two inbound attempts. Separately, a
+- Bounded residual signatures use at most two inbound proposals. Separately, a
   stable right congruence is computed over the complete finite-domain,
   quiescent turn machine and its one-output cut states. This is a finite-domain
   strengthening, not evidence about fresh values or omitted capabilities.
@@ -50,10 +56,10 @@ chooses among meanings that B0 did not uniquely determine, results are labeled
   pair containing `UNKNOWN` is placed in an equivalence class and no survival
   or forgettability claim is derived from it.
 - Witness ordering calls the tuple produced by `Observation.flattened()` the
-  "first-divergence" coordinate. That tuple contains all admission observations
-  first, then client-port frames, then action-port frames. Its index is a stable
-  tie-break only; it is explicitly **not** a temporal position in an interleaved
-  boundary trace.
+  "first-divergence" coordinate. That tuple contains all proof-level domain
+  markers first, then client-port frames, then action-port frames. Its index is
+  a stable tie-break only; it is explicitly **not** a temporal position in an
+  interleaved boundary trace.
 
 ## Frozen frame bytes and canonical order
 

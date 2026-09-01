@@ -44,7 +44,9 @@ ClassKey = tuple[str, ...]
 
 @dataclass(frozen=True)
 class BoundaryResult:
-    admission: str
+    """Generated step plus proof-only inbound-domain membership, when applicable."""
+
+    domain_membership: Optional[str]
     client: tuple[str, ...]
     action: tuple[str, ...]
     next_key: ClassKey
@@ -115,12 +117,12 @@ class QuotientBoundaryMachine:
 
     def resume_step(self, key: ClassKey) -> BoundaryResult:
         if key[0] == "q":
-            return BoundaryResult(ENABLED, (), (), key)
+            return BoundaryResult(None, (), (), key)
         frame = self._owed_frames[key]
         target = self.qkey(int(key[2]))
         if frame.port == "client":
-            return BoundaryResult(ENABLED, (frame.token(),), (), target)
-        return BoundaryResult(ENABLED, (), (frame.token(),), target)
+            return BoundaryResult(None, (frame.token(),), (), target)
+        return BoundaryResult(None, (), (frame.token(),), target)
 
     def _canonical_representatives(self) -> dict[ClassKey, tuple[Frame, ...]]:
         from c0_oracle import INITIAL
@@ -135,7 +137,7 @@ class QuotientBoundaryMachine:
             if key[0] == "q":
                 for frame in INPUTS:
                     edge = self.input_step(key, frame)
-                    if edge.admission == ENABLED:
+                    if edge.domain_membership == ENABLED:
                         crossings.append((frame, edge.next_key))
             else:
                 frame = self._owed_frames[key]
@@ -167,7 +169,7 @@ class QuotientBoundaryMachine:
                         (
                             key,
                             frame.token(),
-                            edge.admission,
+                            edge.domain_membership,
                             edge.client,
                             edge.action,
                             edge.next_key,
@@ -192,7 +194,9 @@ class QuotientBoundaryMachine:
             for frame in INPUTS:
                 edge = self.input_step(key, frame)
                 total += len(
-                    repr((key, frame.token(), edge.admission, edge.next_key)).encode("utf-8")
+                    repr(
+                        (key, frame.token(), edge.domain_membership, edge.next_key)
+                    ).encode("utf-8")
                 ) + 1
         for key in self._owed_frames:
             edge = self.resume_step(key)

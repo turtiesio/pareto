@@ -40,13 +40,18 @@ class UnknownCell:
 
 @dataclass(frozen=True, order=True)
 class Observation:
-    admission: tuple[str, ...]
+    """Proof comparison value.
+
+    ``domain_membership`` contains proof markers, not boundary output frames.
+    """
+
+    domain_membership: tuple[str, ...]
     client: tuple[str, ...]
     action: tuple[str, ...]
 
     def flattened(self) -> tuple[str, ...]:
         return (
-            *(f"admission:{value}" for value in self.admission),
+            *(f"domain:{value}" for value in self.domain_membership),
             *(f"client:{value}" for value in self.client),
             *(f"action:{value}" for value in self.action),
         )
@@ -111,11 +116,13 @@ def generate_histories(max_inbound: int = 4) -> HistoryCorpus:
 
 
 def future_contexts(max_inputs: int = 2) -> tuple[Context, ...]:
-    """All normalized scheduler choices around up to ``max_inputs`` attempts.
+    """All normalized scheduler choices around domain proposals.
 
-    There may be a resume before the first attempt, between attempts, and after
-    the final attempt. Consecutive resumes are observationally idempotent in B1
-    and therefore have a single normalized representative.
+    There may be a resume before the first proposal, between proposals, and
+    after the final proposal. A rejected proposal is a proof-level non-event;
+    the marker records domain membership, not a boundary response. Consecutive
+    resumes are observationally idempotent in B1 and therefore have a single
+    normalized representative.
     """
 
     contexts: list[Context] = []
@@ -147,9 +154,9 @@ def _append_output(
 
 
 def evaluate_context(snapshot: Snapshot, context: Context) -> Observation:
-    """Evaluate one union-admission context without using a candidate encoder."""
+    """Evaluate one union-domain proof context without a candidate encoder."""
 
-    admission: list[str] = []
+    domain_membership: list[str] = []
     client: list[str] = []
     action: list[str] = []
 
@@ -164,17 +171,17 @@ def evaluate_context(snapshot: Snapshot, context: Context) -> Observation:
         assert isinstance(operation, Frame)
         step = accept(current, operation)
         if not step.legal:
-            admission.append(DISABLED)
+            domain_membership.append(DISABLED)
             continue
-        admission.append(ENABLED)
+        domain_membership.append(ENABLED)
         current = step.snapshot
-    return Observation(tuple(admission), tuple(client), tuple(action))
+    return Observation(tuple(domain_membership), tuple(client), tuple(action))
 
 
 class BoundedResiduals:
     """Intern exact bounded strategy trees; hashes are never equality.
 
-    Inbound, scheduler-resume, and total-step budgets are derived from the
+    Inbound-proposal, scheduler-resume, and total-step budgets are derived from the
     supplied contexts. For the default C0 contexts they are 2, 3, and 5. Keeping
     the derived step bound explicit prevents a quiescent ``resume`` self-loop
     from making the recursion infinite and keeps non-default runs consistent
@@ -183,7 +190,7 @@ class BoundedResiduals:
 
     def __init__(self, contexts: tuple[Context, ...]):
         self.contexts = contexts
-        self.max_inbound_attempts = max((context.depth for context in contexts), default=0)
+        self.max_inbound_proposals = max((context.depth for context in contexts), default=0)
         self.max_resume_steps = max(
             (
                 sum(operation == RESUME for operation in context.operations)
@@ -201,11 +208,11 @@ class BoundedResiduals:
     def _node(
         self,
         snapshot: Snapshot,
-        inbound_left: int,
+        proposals_left: int,
         resumes_left: int,
         steps_left: int,
     ) -> int:
-        if steps_left == 0 or (inbound_left == 0 and resumes_left == 0):
+        if steps_left == 0 or (proposals_left == 0 and resumes_left == 0):
             key: tuple[object, ...] = ("stop",)
         else:
             branches: list[object] = []
@@ -219,10 +226,10 @@ class BoundedResiduals:
                 )
                 observation = Observation((), client, action)
                 child = self._node(
-                    emitted.snapshot, inbound_left, resumes_left - 1, steps_left - 1
+                    emitted.snapshot, proposals_left, resumes_left - 1, steps_left - 1
                 )
                 branches.append((RESUME, observation, child))
-            if inbound_left:
+            if proposals_left:
                 for frame in INPUTS:
                     step = accept(snapshot, frame)
                     observation = Observation(
@@ -230,7 +237,7 @@ class BoundedResiduals:
                     )
                     child = self._node(
                         step.snapshot,
-                        inbound_left - 1,
+                        proposals_left - 1,
                         resumes_left,
                         steps_left - 1,
                     )
@@ -247,7 +254,7 @@ class BoundedResiduals:
     def class_id(self, snapshot: Snapshot) -> int:
         return self._node(
             snapshot,
-            self.max_inbound_attempts,
+            self.max_inbound_proposals,
             self.max_resume_steps,
             self.max_total_steps,
         )
@@ -286,14 +293,16 @@ def first_divergence(left: Observation, right: Observation) -> int:
 
 @dataclass(frozen=True)
 class TurnEdge:
-    legal: bool
+    """One proof edge; ``in_domain`` is membership, not emitted output."""
+
+    in_domain: bool
     client: tuple[str, ...]
     action: tuple[str, ...]
     target: int
 
     @property
-    def observation(self) -> tuple[object, ...]:
-        return (self.legal, self.client, self.action)
+    def proof_signature(self) -> tuple[object, ...]:
+        return (self.in_domain, self.client, self.action)
 
 
 class StableRightCongruence:
@@ -358,13 +367,17 @@ class StableRightCongruence:
         return tuple(result)
 
     def _refine(self) -> None:
-        observations = tuple(
-            tuple(edge.observation for edge in state_edges) for state_edges in self.edges
+        proof_signatures = tuple(
+            tuple(edge.proof_signature for edge in state_edges)
+            for state_edges in self.edges
         )
-        parts = self._intern(observations)
+        parts = self._intern(proof_signatures)
         while True:
             keys = (
-                (observations[index], tuple(parts[edge.target] for edge in self.edges[index]))
+                (
+                    proof_signatures[index],
+                    tuple(parts[edge.target] for edge in self.edges[index]),
+                )
                 for index in range(len(self.states))
             )
             refined = self._intern(keys)
@@ -380,7 +393,8 @@ class StableRightCongruence:
         fingerprints: dict[int, tuple[object, ...]] = {}
         for index, part in enumerate(self.partitions):
             fingerprint = tuple(
-                (edge.observation, self.partitions[edge.target]) for edge in self.edges[index]
+                (edge.proof_signature, self.partitions[edge.target])
+                for edge in self.edges[index]
             )
             prior = fingerprints.setdefault(part, fingerprint)
             if prior != fingerprint:
@@ -551,8 +565,8 @@ class Witness:
     left: tuple[str, ...]
     right: tuple[str, ...]
     future: str
-    left_observation: Observation
-    right_observation: Observation
+    left_proof_result: Observation
+    right_proof_result: Observation
     score: tuple[object, ...]
 
 
@@ -722,8 +736,12 @@ def _length_prefixed(data: bytes) -> bytes:
     return len(data).to_bytes(8, "big") + data
 
 
-def _observation_record(observation: Observation) -> bytes:
-    fields = (observation.admission, observation.client, observation.action)
+def _proof_result_record(proof_result: Observation) -> bytes:
+    fields = (
+        proof_result.domain_membership,
+        proof_result.client,
+        proof_result.action,
+    )
     result = len(fields).to_bytes(4, "big")
     for field in fields:
         result += len(field).to_bytes(4, "big")
@@ -888,8 +906,8 @@ def minimized_pair_witness_certificate(
                     winning_depth.to_bytes(4, "big"),
                     divergence.to_bytes(4, "big"),
                     _length_prefixed(context.token().encode("utf-8")),
-                    _length_prefixed(_observation_record(left_observation)),
-                    _length_prefixed(_observation_record(right_observation)),
+                    _length_prefixed(_proof_result_record(left_observation)),
+                    _length_prefixed(_proof_result_record(right_observation)),
                 )
             )
             digest.update(_length_prefixed(record))
@@ -931,7 +949,7 @@ def minimized_pair_witness_certificate(
         ),
         tie_break=(
             "earliest inbound depth; then first differing Observation.flattened coordinate "
-            "(admission tuple, client tuple, action tuple; not temporal); then context token"
+            "(proof-domain tuple, client tuple, action tuple; not temporal); then context token"
         ),
     )
 
