@@ -1,0 +1,19 @@
+[package]
+name = "b1-rust-realizer"
+version = "0.1.0"
+edition = "2021"
+license = "MIT"
+description = "Independent Rust/std realization of the frozen finite B1 machine"
+
+[lib]
+name = "b1_realizer"
+path = "src/lib.rs"
+
+[[bin]]
+name = "b1-realizer"
+path = "src/main.rs"
+
+[profile.release]
+debug = false
+lto = "thin"
+

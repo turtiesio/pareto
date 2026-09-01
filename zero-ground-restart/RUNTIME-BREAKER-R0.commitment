@@ -1,0 +1,6 @@
+schema=zero-ground-cross-runtime-transport-breaker-v1
+canonical_encoding=utf-8-json-sort-keys-compact-no-trailing-newline
+canonical_bytes=13666
+sha256=85741dda1ed537ef5225a1514d0947d277f4ee552b5234ea038fb6c8551e2e97
+disclosed_to_implementer=false
+frozen_date_utc=2026-09-01
