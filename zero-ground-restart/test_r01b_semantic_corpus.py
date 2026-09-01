@@ -36,12 +36,15 @@ class R01BSemanticCorpusTests(unittest.TestCase):
 
     def test_lab_rows_have_no_subject_history_or_behavior_oracle(self) -> None:
         forbidden_keys = {
+            "b_comparison_eligibility",
+            "b_crossing_count",
             "b_expectation",
             "b_history",
             "b_input",
             "b_input_key",
             "b_response",
             "b_state",
+            "b_state_verdict_eligibility",
             "comparison_edge_ids",
             "comparison_partner",
             "expected_b_response",
@@ -60,9 +63,6 @@ class R01BSemanticCorpusTests(unittest.TestCase):
 
         for row in self.holdouts["rows"]:
             self.assertEqual(row["body"]["history_production"], "LAB_ONLY")
-            self.assertEqual(row["body"]["b_crossing_count"], 0)
-            self.assertEqual(row["body"]["b_comparison_eligibility"], "FORBIDDEN")
-            self.assertEqual(row["body"]["b_state_verdict_eligibility"], "FORBIDDEN")
             self.assertEqual(
                 row["expected"]["status_coordinates"]["behavioral_comparison"]["label"],
                 "NOT_COMPARED",
@@ -96,6 +96,17 @@ class R01BSemanticCorpusTests(unittest.TestCase):
                     )
             for item in row["expected"]["failure_reasons"]:
                 self.assertIn((item["code"], item["label"]), failures)
+            full = tables["full_conformance"]
+            allowed_full = {
+                (full["namespace"], item["code"], item["label"])
+                for item in full["codes"]
+            }
+            for check in row["expected"]["conformance_checks"]:
+                item = check["expected_status"]
+                self.assertIn(
+                    (item["namespace"], item["code"], item["label"]),
+                    allowed_full,
+                )
 
 
 if __name__ == "__main__":

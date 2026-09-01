@@ -285,6 +285,168 @@ class R01BSemanticFreezeTests(unittest.TestCase):
                 aggregate,
             )
 
+    def test_in_memory_constituent_checks_exactly_derive_full_conformance(self) -> None:
+        generated = oracle.build_oracle(self.descriptor_package)
+        edges_by_id = {
+            edge["edge_id"]: edge for edge in generated["comparison_edges"]
+        }
+        base_checks = {
+            "DESCRIPTOR_INPUT": (
+                "SUBMITTED_DESCRIPTOR_TEMPLATE_BYTES_AND_FREEZE_OVERLAY_IDS",
+                "descriptor_registry/case_id",
+            ),
+            "EXECUTION": (
+                "ACTUAL_EXECUTION_COORDINATE",
+                "status_coordinates/execution",
+            ),
+            "CUT_REACHABILITY": (
+                "OBSERVED_CUT_REACHABILITY_AND_TERMINATION_POSITION",
+                "cut_reachability",
+            ),
+            "CONTROL_PROTOCOL": (
+                "OBSERVED_NEUTRAL_FRAME_SEQUENCE_FLAGS_TRIAL_DIGEST_AND_ACK_RELATION",
+                "control_protocol_and_descriptor_manifest",
+            ),
+            "CHECKPOINT_STREAM": (
+                "OBSERVED_ORDERED_CHECKPOINT_SLOT_STREAM",
+                "expected_checkpoint_slots",
+            ),
+            "B_RESPONSE": (
+                "ACTUAL_COMPLETE_B_HISTORY_OR_VERIFIED_NO_B_HISTORY",
+                "b_expectation",
+            ),
+            "TERMINAL": (
+                "OBSERVED_PUBLISHER_OR_RECOVERY_TERMINAL",
+                "expected_terminal",
+            ),
+            "WAIT_ORDER": (
+                "OBSERVED_EXACT_PUBLISHER_WAIT_REAP_ORDER",
+                "expected_wait_order",
+            ),
+            "EVIDENCE_ENVELOPE": (
+                "RETAINED_SINGLE_ENVELOPE_SCHEMA_HASH_BOUNDS_AND_REPLAY_INDEX",
+                "evidence_envelope_schema",
+            ),
+            "EXPECTED_RISK_LABEL": (
+                "RISK_LABEL_DERIVED_FROM_THE_ACTUAL_COMPLETE_HISTORY",
+                "expected_risk_label",
+            ),
+        }
+        operation_ids = {
+            f"OPERATION_FACT/{operation}"
+            for operation in self.status_package["operation_registry"]
+        }
+        unknown_kinds: Counter[str] = Counter()
+        total_check_count = 0
+        global_id_pairs: set[tuple[str, str]] = set()
+        registry = generated["conformance_check_registry"]
+        self.assertEqual(
+            registry["base_checks"],
+            {
+                key: {"verification_target": target, "oracle_reference": reference}
+                for key, (target, reference) in base_checks.items()
+            },
+        )
+        self.assertEqual(set(registry["conditional_checks"]), {
+            "PASSIVE_REAP_OBSERVER", "STAGE_CONTINUATION"
+        })
+        self.assertEqual(registry["expected_full_conformance_domain"], ["PASS", "UNKNOWN"])
+        self.assertEqual(registry["sort_rule"], "unsigned UTF-8 check_key bytes")
+
+        for descriptor_row, generated_row in zip(
+            self.descriptor_package["rows"], generated["rows"]
+        ):
+            expected = generated_row["expected"]
+            self.assertNotIn("conformance_checks", expected)
+            keys = expected["conformance_check_keys"]
+            total_check_count += len(keys)
+            self.assertTrue(keys)
+            self.assertEqual(keys, sorted(keys, key=lambda item: item.encode("utf-8")))
+            self.assertEqual(len(keys), len(set(keys)))
+            pairs = {(generated_row["case_id"], key) for key in keys}
+            self.assertTrue(global_id_pairs.isdisjoint(pairs))
+            global_id_pairs.update(pairs)
+            self.assertTrue(set(base_checks) <= set(keys))
+
+            self.assertEqual(
+                {check_key for check_key in keys if check_key.startswith("OPERATION_FACT/")},
+                operation_ids,
+            )
+
+            comparison_ids = {
+                f"COMPARISON_EDGE/{edge_id}"
+                for edge_id in expected["comparison_edge_ids"]
+            }
+            self.assertTrue(comparison_ids)
+            self.assertEqual(
+                {check_key for check_key in keys if check_key.startswith("COMPARISON_EDGE/")},
+                comparison_ids,
+            )
+
+            identity = descriptor_row["identity"]
+            control_unavailable = (
+                identity["mechanism_manifest"] == "DROP_STAGE_CONTROLLER"
+                and identity["cut"] != "NORMAL"
+            )
+            reaping_unknown = (
+                identity["mechanism_manifest"]
+                == "NO_PRE_RECOVERY_REAP_BEHAVIORAL"
+            )
+            conditional_ids = set()
+            if control_unavailable:
+                conditional_ids.add("STAGE_CONTINUATION")
+            if reaping_unknown:
+                conditional_ids.add("PASSIVE_REAP_OBSERVER")
+            self.assertEqual(
+                set(keys)
+                - set(base_checks)
+                - operation_ids
+                - comparison_ids,
+                conditional_ids,
+            )
+
+            expected_unknown_ids = {
+                f"COMPARISON_EDGE/{edge_id}"
+                for edge_id in expected["comparison_edge_ids"]
+                if edges_by_id[edge_id]["expected_result"] == "UNKNOWN"
+            } | conditional_ids
+            edge_results = {
+                edge_id: edges_by_id[edge_id]["expected_result"]
+                for edge_id in expected["comparison_edge_ids"]
+            }
+            statuses = {
+                key: oracle.expected_check_status(key, edge_results) for key in keys
+            }
+            self.assertEqual(
+                {key for key, status in statuses.items() if status == "UNKNOWN"},
+                expected_unknown_ids,
+            )
+            for key, status in statuses.items():
+                self.assertIn(status, {"PASS", "UNKNOWN"})
+                if status == "UNKNOWN":
+                    if key.startswith("COMPARISON_EDGE/"):
+                        unknown_kinds["COMPARISON_EDGE"] += 1
+                    else:
+                        unknown_kinds[key] += 1
+
+            aggregate = oracle.aggregate_full_conformance(keys, edge_results)
+            self.assertEqual(
+                expected["status_coordinates"]["full_conformance"],
+                aggregate,
+            )
+
+        self.assertEqual(total_check_count, 64680)
+        self.assertEqual(generated["conformance_check_count"], total_check_count)
+        self.assertEqual(len(global_id_pairs), total_check_count)
+        self.assertEqual(
+            unknown_kinds,
+            {
+                "COMPARISON_EDGE": 24,
+                "PASSIVE_REAP_OBSERVER": 76,
+                "STAGE_CONTINUATION": 24,
+            },
+        )
+
     def test_operation_facts_preserve_same_b_response_distinction(self) -> None:
         pairs: dict[str, dict[str, object]] = {}
         for descriptor_row, oracle_row in zip(

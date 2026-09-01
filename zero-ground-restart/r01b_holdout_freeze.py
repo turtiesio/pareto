@@ -30,7 +30,7 @@ BREAKER_SHA256 = "99f81a9a4d4f4bf55109a9f43b7cd361c887c9b0b7255a22d009767238e79d
 MEASUREMENT_SHA256 = "854abc48e8e610f9487e07c7c81ed64a32772836d70fc08e40cb3d8b72f6223d"
 MEASUREMENT_PATH_COUNT = 1040
 SUITE_SHA256 = "6f4a1b4588ff4218fff0cd75744d1e8ca2b31c9a9e401334f5d1c746d84cb5cc"
-STATUS_REGISTRY_SHA256 = "3cd692eeebaeb55497bd73bc5e21156e6a706eef7a2b75c4f2e9316c2e2892d9"
+STATUS_REGISTRY_SHA256 = "54857699919b5c95de79bb25006a6fd4f9f448870c7d97c4364be75c6191c61a"
 CASE_TAG = b"ZGR01B-CASE\x00"
 SCHEMA_ID = "R01B-LAB-HOLDOUTS-1"
 MEASUREMENT_FIXTURE_RECIPE_ID = "R01B-SCHEMA-COMPLETE-MEASUREMENT-S0-1"
@@ -205,9 +205,6 @@ def expected_record(
 def lab_body(*, logical_id: str, family: str, attack_kind: str, fixture: dict[str, Any]) -> dict[str, Any]:
     return {
         "attack_kind": attack_kind,
-        "b_comparison_eligibility": "FORBIDDEN",
-        "b_crossing_count": 0,
-        "b_state_verdict_eligibility": "FORBIDDEN",
         "family": family,
         "fixture": fixture,
         "history_production": "LAB_ONLY",
@@ -414,6 +411,36 @@ def build_package() -> dict[str, Any]:
     pending: list[dict[str, Any]] = []
 
     def add(body: dict[str, Any], expected: dict[str, Any], provenance: list[dict[str, Any]]) -> None:
+        attack_status = expected["status_coordinates"]["full_conformance"]
+        attack_check = {
+            "check_id": f"ATTACK_ORACLE/{body['family']}/{body['attack_kind']}",
+            "expected_failure_reasons": expected["failure_reasons"],
+            "expected_status": attack_status,
+            "needed_evidence": expected["needed_evidence"],
+        }
+        base_status = (
+            attack_status
+            if attack_status["label"] == "NOT_APPLICABLE"
+            else enum_coordinate("full_conformance", "PASS")
+        )
+        expected["conformance_checks"] = sorted(
+            [
+                {
+                    "check_id": "LAB_BOUNDARY_ISOLATION",
+                    "expected_failure_reasons": [],
+                    "expected_status": base_status,
+                    "needed_evidence": [],
+                },
+                {
+                    "check_id": "LAB_FIXTURE_SCHEMA",
+                    "expected_failure_reasons": [],
+                    "expected_status": base_status,
+                    "needed_evidence": [],
+                },
+                attack_check,
+            ],
+            key=lambda item: item["check_id"].encode("utf-8"),
+        )
         pending.append({"body": body, "expected": expected, "provenance": provenance})
 
     for index, spec in default_source_specs().items():
@@ -867,6 +894,19 @@ def build_package() -> dict[str, Any]:
         }
         for ordinal, (case_id, item) in enumerate(identified)
     ]
+    precedence = STATUS_AUTHORITY["aggregation_precedence"]["full_conformance"][
+        "highest_to_lowest"
+    ]
+    for row in rows:
+        checks = row["expected"]["conformance_checks"]
+        check_ids = [item["check_id"] for item in checks]
+        if check_ids != sorted(check_ids, key=lambda item: item.encode("utf-8")) \
+                or len(check_ids) != len(set(check_ids)):
+            raise ValueError("LAB conformance checks are not ordered and unique")
+        labels = {item["expected_status"]["label"] for item in checks}
+        aggregate = next(label for label in precedence if label in labels)
+        if aggregate != row["expected"]["status_coordinates"]["full_conformance"]["label"]:
+            raise ValueError("LAB conformance-check aggregation mismatch")
 
     mapped: dict[int, list[str]] = defaultdict(list)
     for row in rows:
@@ -903,12 +943,24 @@ def build_package() -> dict[str, Any]:
     return {
         "case_id_rule": "ASCII(r01b-case-)||lowerhex(sha256(ASCII(ZGR01B-CASE)||00||TV(body)))",
         "counts_by_family": family_counts,
-        "failure_reason_registry": list(FAILURE_REASON_REGISTRY),
         "historical_case_mappings": mappings,
         "historical_source": {
             "case_count": len(cases),
             "object_id": breaker["object_id"],
             "sha256": BREAKER_SHA256,
+        },
+        "lab_boundary_invariant": {
+            "behavioral_comparison": "NOT_COMPARED",
+            "b_crossing_count": 0,
+            "b_state_verdict_eligibility": "FORBIDDEN",
+            "history_production": "LAB_ONLY",
+            "identity_rule": "constant boundary guards are derived and excluded from TV(body)",
+        },
+        "lab_conformance_check_registry": {
+            "ATTACK_ORACLE/<family>/<attack_kind>": "evaluate the submitted fixture against this row's literal expected details",
+            "LAB_BOUNDARY_ISOLATION": "prove LAB_ONLY produced no B crossing, B comparison, or B_STATE verdict",
+            "LAB_FIXTURE_SCHEMA": "validate the submitted closed LAB fixture before evaluating its attack oracle",
+            "aggregation": "common full-conformance precedence over every ordered row check",
         },
         "measurement_source": {
             "closed_container_member_case_count": sum(
@@ -939,7 +991,6 @@ def build_package() -> dict[str, Any]:
         "row_count": len(rows),
         "rows": rows,
         "schema_id": SCHEMA_ID,
-        "status_coordinate_registry": STATUS_AUTHORITY["status_coordinate_registry"],
         "status_registry_source": {
             "artifact": STATUS_REGISTRY.name,
             "byte_length": len(_status_registry_raw),

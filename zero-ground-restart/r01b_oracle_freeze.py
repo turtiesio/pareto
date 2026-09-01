@@ -21,7 +21,7 @@ NO_CROSSING = "NO_CROSSING"
 NO_OBSERVATION = "NO_OBSERVATION"
 HERE = Path(__file__).resolve().parent
 STATUS_REGISTRY_PATH = HERE / "R01B-STATUS-REGISTRY.json"
-STATUS_REGISTRY_SHA256 = "3cd692eeebaeb55497bd73bc5e21156e6a706eef7a2b75c4f2e9316c2e2892d9"
+STATUS_REGISTRY_SHA256 = "54857699919b5c95de79bb25006a6fd4f9f448870c7d97c4364be75c6191c61a"
 STATUS_REGISTRY_BYTES = STATUS_REGISTRY_PATH.read_bytes()
 if hashlib.sha256(STATUS_REGISTRY_BYTES).hexdigest() != STATUS_REGISTRY_SHA256:
     raise RuntimeError("pinned common status registry changed")
@@ -37,6 +37,107 @@ OPERATION_EXPECTATIONS = tuple(
 ERRNO_COORDINATES = tuple(STATUS_REGISTRY["errno_coordinate_registry"])
 CONFIGURED_SOURCES = tuple(STATUS_REGISTRY["configured_source_registry"])
 EVIDENCE_SOURCES = tuple(STATUS_REGISTRY["evidence_source_registry"])
+FULL_CONFORMANCE_PRECEDENCE = tuple(
+    STATUS_REGISTRY["aggregation_precedence"]["full_conformance"][
+        "highest_to_lowest"
+    ]
+)
+
+BASE_CONFORMANCE_CHECKS = (
+    (
+        "DESCRIPTOR_INPUT",
+        "SUBMITTED_DESCRIPTOR_TEMPLATE_BYTES_AND_FREEZE_OVERLAY_IDS",
+        "descriptor_registry/case_id",
+    ),
+    (
+        "EXECUTION",
+        "ACTUAL_EXECUTION_COORDINATE",
+        "status_coordinates/execution",
+    ),
+    (
+        "CUT_REACHABILITY",
+        "OBSERVED_CUT_REACHABILITY_AND_TERMINATION_POSITION",
+        "cut_reachability",
+    ),
+    (
+        "CONTROL_PROTOCOL",
+        "OBSERVED_NEUTRAL_FRAME_SEQUENCE_FLAGS_TRIAL_DIGEST_AND_ACK_RELATION",
+        "control_protocol_and_descriptor_manifest",
+    ),
+    (
+        "CHECKPOINT_STREAM",
+        "OBSERVED_ORDERED_CHECKPOINT_SLOT_STREAM",
+        "expected_checkpoint_slots",
+    ),
+    (
+        "B_RESPONSE",
+        "ACTUAL_COMPLETE_B_HISTORY_OR_VERIFIED_NO_B_HISTORY",
+        "b_expectation",
+    ),
+    (
+        "TERMINAL",
+        "OBSERVED_PUBLISHER_OR_RECOVERY_TERMINAL",
+        "expected_terminal",
+    ),
+    (
+        "WAIT_ORDER",
+        "OBSERVED_EXACT_PUBLISHER_WAIT_REAP_ORDER",
+        "expected_wait_order",
+    ),
+    (
+        "EVIDENCE_ENVELOPE",
+        "RETAINED_SINGLE_ENVELOPE_SCHEMA_HASH_BOUNDS_AND_REPLAY_INDEX",
+        "evidence_envelope_schema",
+    ),
+    (
+        "EXPECTED_RISK_LABEL",
+        "RISK_LABEL_DERIVED_FROM_THE_ACTUAL_COMPLETE_HISTORY",
+        "expected_risk_label",
+    ),
+)
+
+CONDITIONAL_CONFORMANCE_CHECKS = (
+    "PASSIVE_REAP_OBSERVER",
+    "STAGE_CONTINUATION",
+)
+def conformance_check_registry() -> dict[str, Any]:
+    return {
+        "base_checks": {
+            key: {
+                "oracle_reference": oracle_reference,
+                "verification_target": verification_target,
+            }
+            for key, verification_target, oracle_reference in BASE_CONFORMANCE_CHECKS
+        },
+        "conditional_checks": {
+            "PASSIVE_REAP_OBSERVER": {
+                "expected_full_conformance": "UNKNOWN",
+                "oracle_reference": "status_coordinates/needed_evidence/PASSIVE_REAP_OBSERVER_WITH_FROZEN_SEMANTICS",
+                "verification_target": "PASSIVE_NONPARTICIPATING_OBSERVATION_OF_PRE_RECOVERY_REAP_DELETION",
+            },
+            "STAGE_CONTINUATION": {
+                "expected_full_conformance": "UNKNOWN",
+                "oracle_reference": "status_coordinates/needed_evidence/CUT_CONTINUATION_WITHOUT_STAGE_CONTROLLER",
+                "verification_target": "CUT_CONTINUATION_CAPABILITY_WITHOUT_THE_NAMED_STAGE_CONTROLLER",
+            },
+        },
+        "dynamic_checks": {
+            "COMPARISON_EDGE/<edge_id>": {
+                "expected_full_conformance": "UNKNOWN iff the registered edge result is UNKNOWN; otherwise PASS",
+                "oracle_reference": "comparison_edges/<edge_id>/expected_result",
+                "verification_target": "ACTUAL_B_RESPONSE_EQUALITY_RESULT_FOR_<edge_id>",
+            },
+            "OPERATION_FACT/<operation>": {
+                "expected_full_conformance": "PASS",
+                "oracle_reference": "operation_expectations/<operation>",
+                "verification_target": "ACTUAL_<operation>_EXPECTATION_ERRNO_CONFIGURED_SOURCE_AND_REQUIRED_EVIDENCE",
+            },
+        },
+        "expected_full_conformance_domain": ["PASS", "UNKNOWN"],
+        "identity_rule": "the pair (enclosing case_id, check_key); the concatenated display ID is MAY_REBUILD",
+        "persisted_row_form": "ordered unique check_key strings only; target, reference, and status are rebuilt from this registry and registered edges",
+        "sort_rule": "unsigned UTF-8 check_key bytes",
+    }
 
 
 def canonical_json(value: Any) -> bytes:
@@ -620,6 +721,84 @@ def aggregate_behavior(results: list[str]) -> str:
     return "NOT_COMPARED"
 
 
+def expected_check_status(
+    check_key: str,
+    incident_edge_results: dict[str, str],
+) -> str:
+    if check_key in CONDITIONAL_CONFORMANCE_CHECKS:
+        return "UNKNOWN"
+    if check_key.startswith("COMPARISON_EDGE/"):
+        edge_id = check_key.removeprefix("COMPARISON_EDGE/")
+        if edge_id not in incident_edge_results:
+            raise ValueError(f"unregistered incident comparison check: {check_key}")
+        return "UNKNOWN" if incident_edge_results[edge_id] == "UNKNOWN" else "PASS"
+    return "PASS"
+
+
+def aggregate_full_conformance(
+    check_keys: list[str],
+    incident_edge_results: dict[str, str],
+) -> str:
+    if not check_keys:
+        raise ValueError("a row cannot aggregate an empty conformance-check set")
+    statuses = [expected_check_status(key, incident_edge_results) for key in check_keys]
+    if not set(statuses) <= {"PASS", "UNKNOWN"}:
+        raise ValueError(
+            "the frozen subject check domain permits only PASS or UNKNOWN: "
+            f"{statuses}"
+        )
+    for status in FULL_CONFORMANCE_PRECEDENCE:
+        if status in statuses:
+            return status
+    raise ValueError("full-conformance precedence does not cover check statuses")
+
+
+def conformance_check_keys(
+    body: dict[str, Any],
+    expected: dict[str, Any],
+    incident_edge_results: dict[str, str],
+) -> list[str]:
+    keys: list[str] = []
+
+    def add(check_key: str) -> None:
+        try:
+            encoded_key = check_key.encode("utf-8", "strict")
+        except UnicodeEncodeError as error:
+            raise ValueError(f"non-UTF-8 conformance-check key: {check_key!r}") from error
+        if not encoded_key:
+            raise ValueError("conformance check key must be nonempty")
+        keys.append(check_key)
+
+    for check_key, _, _ in BASE_CONFORMANCE_CHECKS:
+        add(check_key)
+
+    operation_facts = expected["operation_expectations"]
+    if [item["operation"] for item in operation_facts] != list(OPERATION_ORDER):
+        raise ValueError("operation expectations are not the exact registered domain")
+    for operation in OPERATION_ORDER:
+        add(f"OPERATION_FACT/{operation}")
+
+    if not incident_edge_results:
+        raise ValueError("every subject row requires a registered comparison edge")
+    for edge_id, literal_result in incident_edge_results.items():
+        if literal_result not in STATUS_ENUMS["behavioral_comparison"][:-1]:
+            raise ValueError(f"invalid literal comparison-edge result: {literal_result}")
+        add(f"COMPARISON_EDGE/{edge_id}")
+
+    if expected["status_coordinates"]["execution"] == "CONTROL_UNAVAILABLE":
+        add("STAGE_CONTINUATION")
+    if body["manifest"] == "NO_PRE_RECOVERY_REAP_BEHAVIORAL":
+        add("PASSIVE_REAP_OBSERVER")
+
+    keys.sort(key=lambda key: key.encode("utf-8"))
+    if len(keys) != len(set(keys)):
+        raise ValueError("duplicate row-local conformance-check key")
+    for key in keys:
+        if expected_check_status(key, incident_edge_results) not in {"PASS", "UNKNOWN"}:
+            raise ValueError("invalid rebuilt conformance-check status")
+    return keys
+
+
 def descriptor_view(item: dict[str, Any]) -> dict[str, Any]:
     """Independent V2 symbolic-row projection used only by the oracle."""
     identity = item["identity"]
@@ -699,7 +878,11 @@ def build_oracle(descriptor_package: dict[str, Any]) -> dict[str, Any]:
     if len(row_work) != 3028:
         raise AssertionError(len(row_work))
     edges, incident, incident_results = build_comparison_edges(row_work)
+    edges_by_id = {edge["edge_id"]: edge for edge in edges}
+    if len(edges_by_id) != len(edges):
+        raise ValueError("duplicate comparison edge ID")
     rows: list[dict[str, Any]] = []
+    total_check_count = 0
     for row in row_work:
         case_id = row["case_id"]
         expected = row["expected"]
@@ -707,6 +890,25 @@ def build_oracle(descriptor_package: dict[str, Any]) -> dict[str, Any]:
         expected["status_coordinates"]["behavioral_comparison"] = aggregate_behavior(
             incident_results[case_id]
         )
+        edge_results = {
+            edge_id: edges_by_id[edge_id]["expected_result"]
+            for edge_id in incident[case_id]
+        }
+        expected["conformance_check_keys"] = conformance_check_keys(
+            row["body"],
+            expected,
+            edge_results,
+        )
+        total_check_count += len(expected["conformance_check_keys"])
+        aggregate = aggregate_full_conformance(
+            expected["conformance_check_keys"], edge_results
+        )
+        if aggregate != expected["status_coordinates"]["full_conformance"]:
+            raise ValueError(
+                f"full-conformance aggregate mismatch for {case_id}: "
+                f"{aggregate} != "
+                f"{expected['status_coordinates']['full_conformance']}"
+            )
         rows.append(
             {
                 "case_id": case_id,
@@ -716,6 +918,8 @@ def build_oracle(descriptor_package: dict[str, Any]) -> dict[str, Any]:
     return {
         "comparison_edge_count": len(edges),
         "comparison_edges": edges,
+        "conformance_check_count": total_check_count,
+        "conformance_check_registry": conformance_check_registry(),
         "descriptor_stream_sha256": hashlib.sha256(
             canonical_json(descriptor_package)
         ).hexdigest(),

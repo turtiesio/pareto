@@ -143,6 +143,58 @@ the complete `L` histories and not deletion of selector responsibility.
 Cross-backend conformance uses this same relation. It never compares the
 backend-containing `L` input bytes as though they were equal.
 
+### 1.3 Exact setup and recovery-fixture values
+
+There is no ambient fixture grammar.  In every schema below `text` is tag
+`04`, `bytes` is tag `03`, and maps and lists use section 3.  An `entry` is
+exactly one of these three closed map shapes, with no additional member:
+
+```text
+{kind: text("ABSENT")}
+{kind: text("REGULAR"), regular_bytes: bytes(B)}
+{kind: text("SYMLINK"), symlink_target_bytes: bytes(T)}
+```
+
+A publication `setup` crossing is exactly tag-`04` text containing one of the
+four ASCII labels below.  Its meaning is the corresponding exact closed
+directory fixture. `record(P)` is section 10.1's `D_sem || P || H` value.
+The publication fixture value is exactly the closed map
+`{authoritative_entry: entry, staging_entry: entry}` and `fixture_tv_hex` is
+lowercase hex of `TV` of that map; it is not a list or the table row.
+
+| setup text | `authoritative_entry` | `staging_entry` |
+|---|---|---|
+| `ABSENT_CLEAN` | `{kind: "ABSENT"}` | `{kind: "ABSENT"}` |
+| `VALID_P0_CLEAN` | `{kind: "REGULAR", regular_bytes: record(P0)}` | `{kind: "ABSENT"}` |
+| `ABSENT_TMP` | `{kind: "ABSENT"}` | `{kind: "REGULAR", regular_bytes: bytes("")}` |
+| `VALID_P0_TMP` | `{kind: "REGULAR", regular_bytes: record(P0)}` | `{kind: "REGULAR", regular_bytes: bytes("")}` |
+
+The fixture table itself is retained in `S1`. The authoritative and staging
+names are the literal UTF-8 bytes of `state.bin` and `.state.tmp`; the private
+directory has no other entry. The label is the complete `B` crossing, not a
+pointer to an operator-selected fixture.
+
+A recovery fixture is exactly this closed map:
+
+```text
+{authoritative_entry: entry,
+ auxiliary_regular_entries:
+   list({name_bytes: bytes(N), regular_bytes: bytes(B)})}
+```
+
+The auxiliary list is ordered by unsigned `name_bytes` and contains no
+duplicate. Each name is a nonempty single relative component, contains neither
+`00` nor `/`, and is neither `state.bin` nor `.state.tmp`. The directory
+contains exactly the declared authoritative entry and auxiliary entries; there
+is no staging or unlisted entry. `ABSENT` and `REGULAR` authoritative entries
+have an empty auxiliary list. The current `NONREGULAR` fixture is exactly a
+`SYMLINK` authoritative entry whose target bytes are
+`.r01b-valid-target` (`2e723031622d76616c69642d746172676574`), plus exactly
+one auxiliary regular entry with that name and the unmutated valid base record
+bytes. No other current fixture has an auxiliary entry. These coordinates are
+representation choices for this falsification instrument, not claimed
+architectural primitives.
+
 ## 2. One complete `L` evidence crossing
 
 Every submitted descriptor produces exactly one external success-or-failure
@@ -241,12 +293,33 @@ case_digest = SHA256(ASCII("ZGR01B-CASE") || 00 || TV(s0))
 case_id = ASCII("r01b-case-") || lowercase_hex_64(case_digest)
 ```
 
-After `D_sem` exists, let `d0` be the exact descriptor identity map.  It
-contains the case ID, history production, backend, mechanism manifest, observer
-profile, exact `B` inputs or exact recovery fixture, cut, injected fault, and repetition.  It
-excludes `semantic_freeze_id`, `realization_id`, expected answers, `trial_id`,
-and `ordinal`; otherwise hashing the registry or a realization would feed back
-into its row identities.  Then:
+After `D_sem` exists, let `d0` be the exact descriptor identity map. Its three
+closed shapes are:
+
+```text
+publication d0 = {
+  case_id: text, history_production: text("PUBLICATION"),
+  backend: text, mechanism_manifest: text, observer_profile: text,
+  setup: text, cut: text, requested_payload: bytes,
+  continuation: bytes, injected_fault: text, repetition: u64
+}
+
+recovery d0 = {
+  case_id: text, history_production: text("RECOVERY_ONLY"),
+  backend: text, mechanism_manifest: text, observer_profile: text,
+  recovery_fixture: section-1.3 map, continuation: bytes, repetition: u64
+}
+
+LAB d0 = {case_id: text, lab_input: exact_TV_body_from_the_S0_LAB_row}
+```
+
+For `LAB_ONLY`, `lab_input` already contains the tagged history production and
+all exact `L` input; its nonnegative JSON integers are `u64`, strings are exact
+text, booleans retain their type, and its maps/lists use section 3. It is the
+same typed body whose bytes generated the case ID. No hex-looking LAB text is
+silently converted to bytes. All three shapes exclude `semantic_freeze_id`,
+`realization_id`, expected answers, `trial_id`, and `ordinal`; otherwise hashing
+the registry or a realization would feed back into its row identities. Then:
 
 ```text
 trial_digest = SHA256(ASCII("ZGR01B-TRIAL") || 00 || TV(d0))
@@ -344,6 +417,8 @@ otherwise `NOT_APPLICABLE` if there are no applicable checks; otherwise
 `PASS`. Every constituent check and its status remains in the canonical record
 stream. In particular, an unavailable comparison cannot be converted to a
 match merely because another edge matched.
+`NOT_APPLICABLE` is therefore ignored when at least one applicable check is
+present: for example, `[PASS, NOT_APPLICABLE]` aggregates to `PASS`.
 
 An alternative can therefore retain a conditional oracle while being
 unavailable here:
@@ -512,7 +587,26 @@ is closed.
 Gate `S` has two ordered, retained subgates.  No subject implementation starts
 until both close.
 
-`S0` freezes exact bytes and hashes for:
+`S0` contains exactly these twelve relative filenames, in the canonical order
+defined below, and no generated manifest, generator, validator, test, subject,
+or realization byte:
+
+```text
+FEASIBILITY-AUDIT-R01.md
+R01-BREAKER-OBJECT.json
+R01B-DESCRIPTORS.json
+R01B-HOLDOUTS.json
+R01B-LITERAL-ORACLE.json
+R01B-MEASUREMENT-REGISTRY.json
+R01B-STATUS-REGISTRY.json
+R01B-SUITE.json
+REALIZATION-CONTRACT-R0.md
+REALIZATION-CONTRACT-R01.md
+REALIZATION-CORRECTION-R01B.md
+REALIZATION-SUPPLEMENT-R01A.md
+```
+
+Those members jointly freeze exact bytes and hashes for:
 
 - this correction profile and every pinned historical input;
 - the five opaque suite positions and adapter semantic specification;
@@ -524,8 +618,12 @@ until both close.
   apparatus limits; and
 - every conditional future retained but not executable.
 
-The semantic seed digest is the hash of R0's canonical filename/length/file-byte
-manifest construction over exactly those `S0` members. Define:
+The semantic seed manifest bytes are R0's concatenation
+`LP(filename_utf8) || u64be(file_length) || file_bytes` over exactly those
+members in ascending unsigned UTF-8 filename order. Paths are the displayed
+relative names and obey R0's path restrictions. `R01B-S0-MANIFEST.json` is a
+derived human/machine index and is not itself an `S0` member. The semantic seed
+digest is SHA-256 of the binary manifest bytes. Define:
 
 ```text
 D_sem = SHA256(ASCII("ZERO-GROUND-R01B-SUITE") || 00 || semantic_seed_digest ||
@@ -534,6 +632,11 @@ H = SHA256(ASCII("ZERO-GROUND-R01B-RECORD") || 00 || D_sem ||
            u64be(length(P)) || P)
 record(P) = D_sem || P || H
 ```
+
+For `WRONG_SUITE`, `D_wrong` is `D_sem` with only the high bit of byte zero
+toggled and `H_wrong` is recomputed with the displayed R0.1B record formula
+using `D_wrong` and the unchanged payload. The installed bytes are
+`D_wrong || P || H_wrong`; no R0/R0.1 digest or ambient record helper is used.
 
 `S1` then mechanically derives from the frozen `S0` bytes and `D_sem`:
 
@@ -544,13 +647,134 @@ record(P) = D_sem || P || H
 - the exact adapted mutation table, including wrong-suite rehashing; and
 - the final literal table of exact expected wire bytes and status coordinates.
 
+The sole semantic `S1` manifest member is canonical JSON file
+`R01B-S1.json`. It has exactly the top-level members `descriptor_registry`,
+`fixture_and_mutation_registry`, `literal_oracle_registry`,
+`measurement_base_fixture`, `schema_id`, and `semantic_suite_digest`. It stores
+exact TV bytes as lowercase hex and contains no final semantic-freeze or
+realization ID.
+
+Its canonical JSON uses UTF-8, no BOM or final newline, no insignificant
+whitespace, shortest decimal nonnegative integers, lowercase hex, and map keys
+in ascending unsigned UTF-8 order. Every current key and string must contain
+only printable ASCII `20..7e`; `"` and `\` use exactly their two-character JSON
+escapes, `/` is never escaped, and every other printable byte is literal. Its
+value is exactly:
+
+```text
+{
+  schema_id: "R01B-S1-1",
+  semantic_suite_digest: lowercase_hex_64(D_sem),
+  fixture_and_mutation_registry: {
+    record_by_payload: list({payload_hex, record_hex}),
+    publication_setups: list({fixture_tv_hex, setup}),
+    recovery_recipes: list({fixture_tv_hex, recipe_tv_hex})
+  },
+  descriptor_registry: {
+    row_count: 6318,
+    rows: list(final_descriptor_row)
+  },
+  literal_oracle_registry: {
+    comparison_edges: exact_copy_of_S0_subject_comparison_edges,
+    rows: list({case_id, expected})
+  },
+  measurement_base_fixture: {
+    fixture_tv_hex, fixture_tv_sha256, path_count: 1040
+  }
+}
+```
+
+The two `record_by_payload` rows sort by raw payload bytes. The four setup rows
+sort by unsigned setup text. `recovery_recipes` contains the 1,172 unique
+symbolic recipe TV values, sorted by raw `TV(recipe)` bytes; the same recipe
+seen on both backends occurs once. Each recipe uses the S0 recipe's exact text,
+signed-negative, and unsigned-nonnegative types. Equal exact fixtures are not
+artificially split: the current recipes derive 1,137 unique fixture TV values.
+The 35 merges are the two-payload `MISSING` pair, common truncation prefixes
+`j=0..32`, and `STALE_VALID(P1->P0)` with `OTHER_VALID(P1->P0)`.
+
+A subject `final_descriptor_row` has exactly keys `case_id`,
+`comparison_edge_ids`, `comparison_partner_case_ids`,
+`descriptor_template_tv_hex`, `expected_reachability`, `history_production`,
+`ordinal`, and `trial_id`. A LAB row has the same keys except it omits
+`expected_reachability`; both comparison lists are empty for LAB. Descriptor
+rows sort by unsigned trial-ID bytes and `ordinal` is that zero-based position.
+Partners and edge IDs sort unsigned and are unique. The descriptor TV is
+exactly `TV(d0)` from section 4.1. The literal-oracle linkage is the identical
+`case_id`: there is exactly one literal row for every descriptor row and no
+extra. Literal rows sort by unsigned case-ID bytes. A subject literal row's
+`expected` and every comparison edge are copied without interpretation from
+`R01B-LITERAL-ORACLE.json`; a LAB literal row copies only its `expected` from
+`R01B-HOLDOUTS.json`. Canonical copying retains exact hex text, status
+coordinates, conformance-check inventory, and smallest-witness order without
+calling a subject, parser, normalizer, or comparator.
+
+The measurement base is a LAB-only synthetic schema fixture, never an observed
+measurement or pass. It is one closed flat map with exactly the 1,040 path
+strings as keys. For path `p`, let
+`k = native_value_kinds.paths[p]`; start at
+`native_value_kinds.definitions[k]` when that member exists, otherwise start at
+`closed_container_schemas[k]`. A `$ref` is an RFC-6901 JSON pointer rooted at
+the complete measurement-registry object. Each value is the canonical native
+value obtained recursively from that schema: resolve `$ref`; use `const`; otherwise use the
+first declared `enum`; use the declared integer `minimum` or zero; use `false`
+for a boolean; use exactly `minItems` array items or zero when `minItems` is
+absent; recursively synthesize each item; and include and recursively
+synthesize exactly every required object member. For strings use the empty string when legal, otherwise
+`x`. A `sha256_hex` pattern uses 64 zero hex digits, `trial_id` uses `r01b-`
+plus 64 zero hex digits, `run_id` uses `r01b-run-` plus 64 zero hex digits,
+and `hex_bytes` uses empty lowercase hex.
+Every synthesized measurement integer is TV `U64`; no `I64` occurs in this
+base.
+No structured unknown/unsupported value occurs in this base. The exact base
+`TV` bytes and SHA-256 are retained before any one-leaf mutation executes.
+
 All `S1` bytes and derivation machinery are retained.  The final
-`semantic_freeze_id` hashes the `S0` manifest, `D_sem`, and R0's canonical
-manifest over the `S1` files. `D_sem`, row identities, and
+`semantic_freeze_id` hashes the binary `S0` manifest, `D_sem`, and R0's
+canonical manifest over the single `S1` file:
+
+```text
+S_digest = SHA256(ASCII("ZERO-GROUND-R01B-SEMANTIC-FREEZE") || 00 ||
+                  LP(S0_manifest_bytes) || D_sem || LP(S1_manifest_bytes))
+semantic_freeze_id = ASCII("r01b-semantic-") || lowercase_hex_64(S_digest)
+```
+
+Here `S1_manifest_bytes` is exactly
+`LP(UTF8("R01B-S1.json")) || u64be(length(S1_file_bytes)) || S1_file_bytes`.
+
+`R01B-SEMANTIC-FREEZE.json` is the derived closure record and is not an `S0`
+or `S1` member. `D_sem`, row identities, and
 descriptor-template bytes explicitly exclude that final ID and the later
 realization ID, so no dependency is cyclic. Any `S1` mismatch with the
 precommitted symbolic case or oracle is a semantic-gate failure, not an allowed
 repair.
+
+Generators and validators are realizations of the frozen semantics, not
+semantic inputs: two unlike programs that emit the same exact `S0`/`S1` bytes
+must obtain the same ID. Nevertheless their exact bytes do not disappear.
+The closure record retains a separate, non-semantic gate-machinery manifest
+over exactly these relative filenames:
+
+```text
+r01b_descriptor_freeze.py
+r01b_holdout_freeze.py
+r01b_measurement_freeze.py
+r01b_oracle_freeze.py
+r01b_semantic_freeze.py
+r01b_status_freeze.py
+r01b_tv.py
+test_r01b_freeze.py
+test_r01b_holdouts.py
+test_r01b_semantic_corpus.py
+test_r01b_semantic_freeze.py
+test_r01b_status.py
+test_r01b_tv.py
+```
+
+The semantic-freeze generator may hash its own source because its source
+contains no expected self-hash; this manifest does not feed `D_sem`, `S1`, or
+`S_digest`. All of this machinery remains charged to storage, operations, and
+TCB and is later included by gate `R` if loaded for a run.
 
 ### 10.2 Realization gate `R`
 
@@ -623,6 +847,10 @@ materialize, for both valid payloads and guest backends:
 - every newly admitted timeout, signal, I/O, attestation, control, or replay
   attack under a distinct provenance and applicability coordinate.
 
+For `FLIP(i,b)`, `mutated[i] = original[i] XOR (1 << b)` with
+`0 <= b < 8`; bit zero is the least-significant bit. No host bit numbering is
+consulted.
+
 Wrong-suite recomputes `H` with the R0.1B record tag and changed suite value.
 Every recovery mutation emits the complete typed `recovery_fixture` used by the
 corresponding `B` production. No R0 byte offset, tag, digest, expected record,
@@ -658,6 +886,39 @@ The only registered errno coordinates in the base oracle are `NONE`,
 `EEXIST_17`, and `EIO_5`. Any other observed errno is retained but yields the
 closed unregistered-errno failure/unknown result; it never widens the oracle at
 runtime.
+
+The subject oracle contains a nonempty ordered constituent-check inventory for
+every row; an aggregate assertion is not a substitute. A row persists only its
+sorted unique `conformance_check_keys` text list. A check's global identity is
+the pair `(enclosing case_id, check_key)`; concatenating a display ID is
+`MAY_REBUILD` and is not repeated in the oracle. One package-level closed
+registry retains each fixed key's actual verification target and oracle
+reference plus templates for dynamic keys. Expected constituent status is
+also rebuilt exactly: conditional keys are `UNKNOWN`; an incident edge key is
+`UNKNOWN` iff that edge's frozen result is `UNKNOWN`; every other subject key
+is `PASS`. The ten base keys are `B_RESPONSE`,
+`CHECKPOINT_STREAM`, `CONTROL_PROTOCOL`, `CUT_REACHABILITY`,
+`DESCRIPTOR_INPUT`, `EVIDENCE_ENVELOPE`, `EXECUTION`, `EXPECTED_RISK_LABEL`,
+`TERMINAL`, and `WAIT_ORDER`. Every row also has exactly one
+`OPERATION_FACT/<operation>` for every registered operation and one
+`COMPARISON_EDGE/<edge_id>` for every incident edge. A control-unavailable row
+adds `STAGE_CONTINUATION`; a no-pre-recovery-reap row adds
+`PASSIVE_REAP_OBSERVER`. The base subject domain permits only constituent
+`PASS` or `UNKNOWN`. Section 5's full coordinate must equal aggregation over
+all reconstructed statuses. Deleting the repeated display ID, target,
+reference, or status moves no responsibility into human convention: their
+complete reconstruction rules and values remain in the common registry.
+
+Every LAB oracle likewise contains exactly three ordered row-local checks:
+`LAB_BOUNDARY_ISOLATION`, `LAB_FIXTURE_SCHEMA`, and
+`ATTACK_ORACLE/<family>/<attack_kind>`. Their maps have exactly keys
+`check_id`, `expected_failure_reasons`, `expected_status`, and
+`needed_evidence`. The attack check carries the row's literal expected outcome;
+the other two are `PASS`, except that every check of an unavailable
+`NOT_APPLICABLE` conditional row is `NOT_APPLICABLE`, so that status is never
+mixed with an applicable pass. The aggregate must equal the row's frozen full
+coordinate. Thus verifier code must demonstrate every named responsibility;
+it cannot manufacture the final coordinate directly.
 
 Every explicit comparison edge has its own expected `MATCH`, `DIFFER`, or
 `UNKNOWN` result and a minimized witness order.  The row-level behavioral

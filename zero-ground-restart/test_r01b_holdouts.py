@@ -49,14 +49,8 @@ class R01BHoldoutFreezeTests(unittest.TestCase):
                 "sha256": holdouts.STATUS_REGISTRY_SHA256,
             },
         )
-        self.assertEqual(
-            self.package["status_coordinate_registry"],
-            self.status_registry["status_coordinate_registry"],
-        )
-        self.assertEqual(
-            self.package["failure_reason_registry"],
-            self.status_registry["failure_reason_registry"],
-        )
+        self.assertNotIn("status_coordinate_registry", self.package)
+        self.assertNotIn("failure_reason_registry", self.package)
 
     def test_case_identity_order_and_expected_answer_exclusion(self) -> None:
         previous = ""
@@ -120,9 +114,9 @@ class R01BHoldoutFreezeTests(unittest.TestCase):
             body = row["body"]
             expected = row["expected"]
             self.assertEqual(body["history_production"], "LAB_ONLY")
-            self.assertEqual(body["b_crossing_count"], 0)
-            self.assertEqual(body["b_comparison_eligibility"], "FORBIDDEN")
-            self.assertEqual(body["b_state_verdict_eligibility"], "FORBIDDEN")
+            self.assertNotIn("b_crossing_count", body)
+            self.assertNotIn("b_comparison_eligibility", body)
+            self.assertNotIn("b_state_verdict_eligibility", body)
             self.assertEqual(body["repetition"], 0)
             self.assertNotIn("b_state_verdict", expected)
             self.assertEqual(
@@ -131,6 +125,16 @@ class R01BHoldoutFreezeTests(unittest.TestCase):
             )
             scopes = expected["status_coordinates"]["scope"]
             self.assertNotIn("B_PROCESS_KILL", {scope["label"] for scope in scopes})
+        self.assertEqual(
+            self.package["lab_boundary_invariant"],
+            {
+                "behavioral_comparison": "NOT_COMPARED",
+                "b_crossing_count": 0,
+                "b_state_verdict_eligibility": "FORBIDDEN",
+                "history_production": "LAB_ONLY",
+                "identity_rule": "constant boundary guards are derived and excluded from TV(body)",
+            },
+        )
 
     def test_status_coordinates_and_reason_invariants(self) -> None:
         coordinate_names = {
@@ -143,6 +147,20 @@ class R01BHoldoutFreezeTests(unittest.TestCase):
         }
         for row in self.rows:
             expected = row["expected"]
+            checks = expected["conformance_checks"]
+            check_ids = [item["check_id"] for item in checks]
+            self.assertEqual(check_ids, sorted(check_ids))
+            self.assertEqual(len(check_ids), len(set(check_ids)))
+            self.assertIn("LAB_BOUNDARY_ISOLATION", check_ids)
+            self.assertIn("LAB_FIXTURE_SCHEMA", check_ids)
+            self.assertEqual(sum(item.startswith("ATTACK_ORACLE/") for item in check_ids), 1)
+            labels = {item["expected_status"]["label"] for item in checks}
+            precedence = self.status_registry["aggregation_precedence"]["full_conformance"]["highest_to_lowest"]
+            aggregate = next(label for label in precedence if label in labels)
+            self.assertEqual(
+                aggregate,
+                expected["status_coordinates"]["full_conformance"]["label"],
+            )
             coordinates = expected["status_coordinates"]
             self.assertEqual(set(coordinates), coordinate_names)
             for name in coordinate_names - {"scope"}:

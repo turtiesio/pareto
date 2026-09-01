@@ -44,6 +44,10 @@ class R01BStatusFreezeTests(unittest.TestCase):
         self.assertEqual(status.aggregate_full_conformance([]), "NOT_APPLICABLE")
         self.assertEqual(status.aggregate_full_conformance(["PASS"]), "PASS")
         self.assertEqual(
+            status.aggregate_full_conformance(["PASS", "NOT_APPLICABLE"]),
+            "PASS",
+        )
+        self.assertEqual(
             status.aggregate_full_conformance(["PASS", "UNSUPPORTED", "UNKNOWN"]),
             "UNKNOWN",
         )
