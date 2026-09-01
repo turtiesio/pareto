@@ -1,0 +1,48 @@
+{
+  "adapter_fault_futures": {
+    "signal_15_expected_observation_hex": "01",
+    "timeout_deadline_ns": 250000000,
+    "timeout_expected_observation_hex": "01",
+    "whole_recovery_signal_9_expected_observation": "NO_OBSERVATION"
+  },
+  "adapter_specification": {
+    "determinism_check_invocations": 2,
+    "other_inputs": "UNSUPPORTED_OUTSIDE_FROZEN_SUITE",
+    "rows": [
+      {
+        "continuation_hex": "",
+        "output_hex": "",
+        "payload_hex": ""
+      },
+      {
+        "continuation_hex": "",
+        "output_hex": "00",
+        "payload_hex": "00"
+      }
+    ]
+  },
+  "opaque_positions": {
+    "C_hex": "",
+    "P0_hex": "",
+    "P1_hex": "00",
+    "Y0_hex": "",
+    "Y1_hex": "00"
+  },
+  "observation_wires": {
+    "ABSENT_hex": "00",
+    "OK_Y0_hex": "0200000000",
+    "OK_Y1_hex": "020000000100",
+    "REJECT_hex": "01"
+  },
+  "record_bounds": {
+    "maximum_opaque_bytes": 4096,
+    "P0_record_bytes": 64,
+    "P1_record_bytes": 65
+  },
+  "schema_id": "R01B-SUITE-1",
+  "selected_subject_environment": [
+    "LANG=C",
+    "LC_ALL=C",
+    "PATH=/usr/bin:/bin"
+  ]
+}
