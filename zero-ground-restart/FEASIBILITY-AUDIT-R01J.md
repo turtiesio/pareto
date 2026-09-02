@@ -4,20 +4,24 @@
 
 **FIRST MILESTONE: FAIL / NOT ACHIEVED.**
 
-R0.1J establishes a coherent bounded **formal** continuation quotient, but it
-does not establish the smallest total system required by the ZERO GROUND
-contract. Independent work reproduces the central counts—153 PUBLIC outcome
-functions and 329 contractual all-scope classes—and directly closes the finite
-controller and scheduler domains. Those successes do not cure the five fresh
-finite defect families. The executable reports five failing checks across the
+R0.1J has a coherent bounded **formal** continuation quotient under the fresh
+blind and literal audits, but it does not establish the smallest total system
+required by the ZERO GROUND contract. Those audits separately support the
+central counts—153 PUBLIC outcome functions and 329 contractual all-scope
+classes—and the executable derives the same numbers under a narrower fixed-word
+probe basis. The executable also closes finite controller and scheduler key
+domains from normalized seeds. None of that cures the five fresh finite defect
+families. The executable reports five failing checks across the
 persistence/evidence families because it splits the envelope defect into two
 facets; fresh F01 raw-router totality remains a separate static FAIL that the
-executable did not directly test. Nor do the formal successes supply the
-missing physical, externalization, cognition, portability, or TCB experiments.
+executable did not directly test. Nor do the formal results supply the missing
+physical, externalization, cognition, portability, or TCB experiments.
 
 The decisive boundary is:
 
-- the finite FORMAL transition quotient passes within its declared model;
+- the fresh blind/literal analysis supports the finite FORMAL quotient, while
+  the executable's fixed-word refinement does not prove its adaptive probe
+  basis complete;
 - the declared total evidence and raw-operation contract does not;
 - the frozen Section 10 persistence ledger is incomplete even for that formal
   quotient; and
@@ -39,7 +43,7 @@ physical recovery result. This audit selects none of those.
 | `LITERAL-SPEC-AUDIT-R01J.md` | `bf0a237870a2abfc4f34585a44049091ae5510cb` | `370642e1ea148c4702a373a3e33347d3987c160db1fe41dc5e9364cb4ead3956` | Independent literal/canonical audit |
 | `ARCHIVE-REPLAY-R01J.md` | `41a0201a90ca23baad93a7847d732781c2159b15` | `94a07058e89b3c34afb4fed6147f463837f1f3483248b80f40e93843e05bbf0d` | Post-break replay of quarantined attacks |
 | `r01j_history_experiment.py` | `1db2506930b58d9178a31d13fbe2d0774b7c08c0` | `55ae07d48029e326cfe32390e8cd5ad4254a6624902a7752a561cc2881120d35` | Fail-closed executable falsifier |
-| `EXPERIMENT-RESULT-R01J.md` | `feb7e325d118dba31e84099efb2fb84144c0f24c` | `817a449934c1e03ff9f6b38d566a864c3502f5035e2e5f7af143d877497f3c85` | Frozen author and independent run record |
+| `EXPERIMENT-RESULT-R01J.md` | `f7e8c4d666b2ab4e61a72739bf92d7c036bd8bb3` | `67a42e86a1b997510de88f1b95d48c8aa10235c57300016a54f9c099bac932fc` | Corrected author and independent run-scope record |
 | `PERSISTENCE-COLLISION-LEDGER-R01J.md` | `f503e80daef498902e74987115adb7825ba270b4` | `ce648de3379817ace52864c87ca1d9427a6bc01bdb717603fba0510cbd38eb3c` | Audit-only corrected responsibility ledger |
 
 The final executable commit changes only `r01j_history_experiment.py`. The
@@ -74,15 +78,19 @@ cognitive independence, so no stronger provenance claim is credited.
 The author's post-commit run exited `1` with `63 PASS`, `5 FAIL`, and `4
 UNKNOWN` evaluations. Its complete stdout had SHA-256
 `fa132536f0aff45e2592f23cccd04c88cd7e50bfb51cd409b4a89a705b12a930`;
-the JSON recorded 287.949434 seconds of semantic runtime, while the wrapper
+the JSON recorded 287.949434 seconds of whole-program elapsed time, while the wrapper
 measured 288.049929 seconds and 175,232 KiB maximum resident set.
 
 An independent run also exited `1`, took 294.08 seconds wall time and 292.63
 seconds user CPU, reached 174,052 KiB maximum resident set, and emitted stdout
 SHA-256 `7d7aff5aff0e9ce04a1ac7ebcc316361428efca2ff24d2b21fa80e7f1a558588`.
-The stdout hashes are expected to differ because each JSON report contains its
-run-specific timing. The identities, finite counts, verdict names, and exit
-behavior agree. These are falsifier costs, not service latency, recovery time,
+The JSON contains run-specific timing, so byte-identical output is not
+expected. The unequal hashes alone do not prove timing is their only difference
+and do not independently reproduce the named evaluations. The author's full
+output supplies the `63/5/4` summary and verdict names; the separate run verifies
+the frozen source's exit behavior and resource envelope and supplies an
+independent whole-output digest. No runtime-stripped normalized comparison was
+performed. These are falsifier costs, not service latency, recovery time,
 storage cost, or operational bounds.
 
 The executable directly reproduced:
@@ -95,10 +103,15 @@ The executable directly reproduced:
 | Exact recovery histories generated and folded | 1,208,272 |
 | All declared cuts | 1,208,429 |
 | Normalized recovery conditions | 854 |
-| Recovery PUBLIC / contractual quotient | 139 / 315 |
-| Combined PUBLIC / contractual quotient | 153 / 329 |
+| Fixed-word recovery PUBLIC / contractual partition | 139 / 315 |
+| Derived combined PUBLIC image / contractual class count | 153 / 329 |
 | Decision-key closure `D` | 82,224 |
 | Gap-key closure `G` | 64,067 |
+
+The script derives 153/329 by adding the fourteen clean residual classes to
+the fixed-word 139/315 recovery partitions and applying one common FIN/pass
+clean-versus-recovery no-merger witness. It does not independently partition
+the full adaptive controller-table relation.
 
 The literal audit further decomposes `D` as
 `d=0:78,091`, `d=1:3,977`, `d=2:153`, and `d=3:3`. Thus 4,133 controller
@@ -106,33 +119,43 @@ entries are free, 78,091 are forced FIN, a complete controller is 82,245
 bytes, and there are `13^4133` legal controllers. `G` includes 12,929 END
 keys; the scheduler vector is 8,009 bytes, its complete encoding is 8,030
 bytes, and there are `2^64067` schedulers. These are formal policy-domain
-costs, not persisted-service-state requirements.
+costs, not persisted-service-state requirements. The executable's D/G
+exploration is seeded from fourteen clean residual coordinates plus the 854
+normalized recovery conditions, not from every exact prefix as a distinct
+seed.
 
 ### 2.2 Direct, symbolic, and unexecuted boundaries
 
 The 1,208,272 exact recovery prefixes were directly generated, folded, and
 serialized. Arithmetic covered all 12,246 unordered clean-history pairs;
 separator execution covered all 91 unequal residual-value pairs. The quotient
-refinement itself ran on the 854 normalized conditions using the finite suffix
-behavior, and exact cuts lift through the condition derived from each prefix.
-That exact-history lift is symbolic; it is not 1,208,272 independent all-policy
-future executions.
+refinement itself applies each of 1,885 fixed failure-free words of length zero
+through three to each of the 854 normalized recovery conditions, using the same
+word on both selector branches. It does not enumerate the adaptive controller
+table universe and does not prove that this fixed-word probe basis is complete
+for it. Exact cuts are then lifted through the normalized condition derived
+from each prefix. That exact-history lift is symbolic; it is not 1,208,272
+independent future evaluations.
 
 The blind break gives formal exact-history class-size histograms by lifting
 the exact condition frequencies. The final executable did not independently
 emit or exhaustively validate the full exact-history multiplicity corpus, so
-that stronger executable claim remains UNKNOWN. Likewise, canonical witness
-search was executed for the frozen Q1/Q2 controls, not for every arbitrary
-pair.
+that stronger executable claim remains UNKNOWN. Its Q1 search minimizes only
+within eight FIN-path scheduler masks and eligible scopes. Q2 is constructed
+and checked for separation and codec behavior but is not globally minimized;
+neither control establishes arbitrary-pair global minimization.
 
 No run performed a physical deletion, cold reconstruction, process/power-loss
 recovery, external-carrier severing, receiver-effect observation, controlled
 human study, cross-platform comparison, one-at-a-time TCB perturbation, or
 unlike-physical-realization comparison.
 
-### 2.3 Formal predictions that survived
+### 2.3 Combined formal support that survived
 
-The independent recount and executable agree on the following bounded facts:
+The fresh blind and literal audits provide the stronger analytic support for
+the complete FORMAL relation. The executable provides narrower fixed-word,
+closure, and control evidence. With those sources kept distinct, the following
+bounded facts survive:
 
 - one ungated relation compares clean and every recovery phase;
 - the clean class multiset is
@@ -147,12 +170,17 @@ The independent recount and executable agree on the following bounded facts:
 - OLD/NEW application, T pre-A/post-A capture counts, FIN-pending STOPPED, and
   terminal no-STOPPED behavior hold formally;
 - prefix-only `EncCut`, formal/raw carrier separation for completed finite
-  observations, viewer admissibility, and Section 8.7 witness existence and
-  uniqueness hold in the formal model; and
-- the D/G closure choice is exact and noncircular at the mathematical level.
+  observations, and viewer admissibility hold in the formal model;
+- the literal audit proves Section 8.7 witness existence and uniqueness from
+  the finite policy domains, while exact arbitrary-pair bytes remain UNKNOWN;
+  and
+- the literal audit and executable both obtain the exact D/G closure sizes,
+  though neither result is a physical persistence claim.
 
-These PASSes establish the bounded formal quotient. They do not establish the
-candidate's larger total-system contract.
+The analytic audits support the bounded formal quotient; the executable's
+matching numbers are not, by themselves, a completeness proof for adaptive
+policies. None of these results establishes the candidate's larger
+total-system contract.
 
 ## 3. Finite failure boundary
 
@@ -172,11 +200,17 @@ crossing, the smallest nonempty partial observation. A mixed-manifest masking
 witness necessarily has two cases; the context collision needs one timeout
 case and two external contexts.
 
+The missing Q7 responsibility does **not** invalidate the 153/329 formal
+counts. The relation already distinguishes the clean and recovery classes; the
+failure is that Section 10's allegedly complete persistence classification
+does not name enough information to preserve a distinction already present in
+that quotient.
+
 ### 3.2 The four executable UNKNOWNs
 
 | Executable evaluation | Why it remains UNKNOWN |
 |---|---|
-| `arbitrary_pair_canonical_witness_search` | Exact global minimization ran only for the Q1/Q2 controls, not every separable pair. |
+| `arbitrary_pair_canonical_witness_search` | Q1 was minimized only within eight FIN-path masks and eligible scopes; Q2 was constructed and checked, not globally minimized; no arbitrary-pair search ran. |
 | `zero_case_manifest_evidentiary_adequacy` | The exact 57-byte empty manifest is structurally accepted, but no generator, verifier, realization, or proposition is thereby evidenced. |
 | `origin0_only_manifest_is_not_a_verifier_test` | Matching generated FORMAL traces show generator self-consistency only; no negative parser or independent realization was tested. |
 | `experiment_envelope_encoding_and_manifest_binding` | No envelope bytes, signature grammar, authority, identity, or manifest-binding rule is frozen. |
@@ -194,8 +228,9 @@ literal evidence below.
 ### 3.3 Static contract failure not discharged by the run
 
 Fresh break F01 remains a separate FAIL. The encoded `Eval(H,Ctl,Sch)` core
-produces branches for the tested derived start phases, but the added raw
-phase-action boundary is not total:
+produces branches for seven representative derived start phases under one
+FIN/no-crash policy pair, but that check neither covers every reachable router
+configuration nor the added raw phase-action boundary:
 
 - at the smallest pending selector barrier, raw “force SELECT old” is neither
   an encoded policy evaluation nor an outside-router refusal;
@@ -318,13 +353,13 @@ failure or UNKNOWN in another.
 
 | Dimension | Evidence and burden now visible | Verdict |
 |---|---|---|
-| Information/distinction preservation | The bounded FORMAL quotient and 329 classes reproduce; exact prefix and branch orientation are distinguished | PASS for the formal continuation model; FAIL for partial-timeout evidence and the incomplete responsibility ledger |
+| Information/distinction preservation | Blind/literal analysis supports 329 FORMAL classes; the executable derives 329 under fixed words but does not prove adaptive probe completeness; exact prefix and branch orientation are distinguished | Formal quotient supported analytically; FAIL for partial-timeout evidence and the incomplete responsibility ledger |
 | Persistent state | Behavioral lower bounds and conditional derivations are identified without choosing a shape | No physical carrier, deletion/cold-start run, durability result, or minimum encoding: UNKNOWN |
 | Semantic machinery | Exact transition fold, five viewers, all-cut relation, D/G closures, branch generator, codecs, and witness order | Core PASS; raw router and raw-description boundary FAIL/UNDERDEFINED |
 | Human cognition | A 49,826-byte candidate spans phase routing, two large policy domains, viewers, evidence precedence, and separate ledgers | No controlled reviewer study; raw/evidence forks already prevent one literal reproduction: UNKNOWN empirically |
 | Authoring burden | Twelve bounded requests are simple, but a complete controller has 82,224 entries and external policies/context must be supplied | Exact table burden known; usable authoring method, validation burden, and error rate UNKNOWN |
 | Query/navigation burden | QUERY, CURRENT, and X provide bounded value/state access; no search/navigation infrastructure was built | Bounded formal queries PASS; discovery, arbitrary queries, causal/counterfactual explanation, and scaling UNKNOWN/unsupported |
-| Runtime | One falsifier run: 287.949434 s, 175,232 KiB peak child RSS | Measurement applies only to the experiment; service, recovery, and canonical-search runtime UNKNOWN |
+| Runtime | Author run: 287.949434 s recorded elapsed, 175,232 KiB peak RSS; separate run: 294.08 s wall, 174,052 KiB peak RSS | Measurements apply only to the experiment; service, recovery, and canonical-search runtime UNKNOWN |
 | Storage | Controller encoding 82,245 bytes; scheduler encoding 8,030 bytes; exact prefixes/manifests are variable | No selected representation, retention volume, write amplification, or physical storage result: UNKNOWN |
 | Operations | Formal DOWN/READY and terminal behavior exist | No process restart, power failure, backup/restore, corruption, monitoring, or resource-bound campaign: UNKNOWN |
 | Trusted computing base | Candidate names runtime, OS, transport, serializer, compiler, capture, selector, policy providers, canonicalizer, spec/build, envelope signer, and human adjudication | No one-at-a-time perturbation or independent oracle: UNKNOWN |
@@ -342,8 +377,8 @@ failure or UNKNOWN in another.
 | DELETE | Deleting clean-versus-DOWN or active/special phase responsibility causes the Q7/phase-matrix collisions. No physical deletion run exists. | In the exact prefix or another phase-bearing carrier, the fold, recovery router, and the mechanism that survives the execution boundary. |
 | MERGE | Within-class mergers F1-F9 are permitted; cross-class mergers such as `J_C/J_I`, `J_I/J_F`, and directed-edge reversal are forbidden. Timeout kind 1 performs an evidence merge that FAILS. | In all-scope branch identity, SELECTOR/PRIV labels, phase obligations, and a lossless evidence carrier. |
 | DERIVE | Residual, d, phase, frames, and projections have exact formal derivations. | In retained source bytes, specification identity, validation/fold code, and reconstruction work; none is zero complexity. |
-| RECOMPUTE | D/G, outcomes, and witness search are finite; D/G were independently recomputed. Cold restart and arbitrary-pair witness regeneration were not. | In closure exploration, large policy domains, canonicalizer runtime/memory, and source availability. |
-| COLLIDE | Formal normalized quotient collisions were searched without finding a clean/recovery merger. The timeout carrier and manifest/context classifier have explicit collisions. | In progress-bearing timeout evidence, per-case verdict composition, and context binding. |
+| RECOMPUTE | D/G, outcomes, and witness search are finite; D/G were recomputed from fourteen clean coordinates plus 854 normalized recovery seeds. Cold restart and arbitrary-pair witness regeneration were not. | In closure exploration, large policy domains, canonicalizer runtime/memory, and source availability. |
+| COLLIDE | FIN/pass directly separates clean from recovery; fixed-word refinement partitions the normalized recovery conditions, while blind/literal analysis supplies the stronger formal quotient support. No executable exhaustive adaptive collision search ran. The timeout carrier and manifest/context classifier have explicit collisions. | In progress-bearing timeout evidence, per-case verdict composition, context binding, and the still-unexecuted adaptive completeness argument. |
 | FUTURE | FIN/pass distinguishes clean from recovery with zero ordinary C; later FIN/STOPPED obligations distinguish every phase family. | In the full phase responsibility that Section 10 omitted, not merely in r or d. |
 | EXTERNALIZE | Manifest context, controller, scheduler, selector, capture, spec, and canonicalizer are external or externally influenced; no severing test passed. | In service availability, identity binding, signatures, distribution, recovery, and organizational/human procedures. F04 shows a concrete unbound-context failure. |
 | REALIZE | FORMAL is the only admitted realization. | All media, process, power-loss, physical completion, rollback, corruption, and cross-realization work remains outside the candidate and UNKNOWN. |
@@ -391,10 +426,13 @@ it also supplies no missing physical, human, portability, or trust evidence.
 
 ## 8. Final feasibility verdict
 
-R0.1J is a valuable bounded formal model. Its history corpus, ungated
-continuation relation, normalized quotient, policy closures, and several
-canonical rules are independently reproducible. It therefore narrows the
-behavioral information lower bound more defensibly than R0.1I.
+R0.1J is a valuable bounded formal model. Its history corpus and policy-key
+closures are executable, while the fresh blind/literal audits separately
+support its ungated continuation relation, normalized quotient, and canonical
+rules. The executable derives the same 153/329 counts under 1,885 fixed-word
+probes but does not prove that basis complete for adaptive controllers. With
+that evidence boundary explicit, R0.1J narrows the behavioral information
+lower bound more defensibly than R0.1I.
 
 It does not reach the requested first milestone. The declared total contract
 still loses a captured timeout prefix, permits UNKNOWN to mask a finite FAIL,
