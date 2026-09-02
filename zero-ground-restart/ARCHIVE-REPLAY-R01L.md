@@ -273,7 +273,9 @@ candidate:
     closure remain UNKNOWN rather than silently passing;
 11. externalized compilers, selectors, replay, indexing, recovery, and trust
     are charged in the total-system table; and
-12. the candidate was frozen under a genuine pre-archive builder quarantine.
+12. the candidate was frozen before archive exposure under the reported
+    builder quarantine; private file/cognitive isolation remains self-attested,
+    not independently observed.
 
 These improvements do not cure F01–F03 and do not create missing viewer,
 progress, recovery, search, physical, or unlike-realization capabilities.
@@ -321,7 +323,7 @@ artifacts differ. This is scope discipline, not a new candidate failure.
 | portability | exact syntax is not empirical portability; no R0.1L second realization |
 | explainability | accepted causal traces survive; rejected-attempt and viewer-relative explanation unsupported |
 | information-loss risk | local collision witnesses survive; corruption, coherent substitution, and unseen futures UNKNOWN |
-| research process | builder quarantine PASS as attested and ordered; breaker independence qualified by prior-memory disclosure; full archive replay correctly post-freeze |
+| research process | freeze-before-archive chronology PASS; builder file/cognitive isolation self-attested rather than independently proved; breaker independence qualified by prior-memory disclosure; full archive replay correctly post-freeze |
 
 No row offsets another and no weighted score is used.
 
