@@ -17,7 +17,17 @@ byte-closure claims; it does not by itself instantiate the candidate's
 `encode(h1) = encode(h2)` history implication. The frozen encoding still cannot
 preserve one distinction that its declared verdict contract requires.
 
-Fresh F02–F11 independently expose nonfunctional occurrence expansion,
+There is also an independent process **FAIL**. The builder produced an initial
+draft without prior conclusions, but before the final candidate was frozen a
+builder-side advisory read the prior blind attack index, returned attacks
+against draft SHA-256
+`348ce5805d591df833810858ad1833e49e23c62511ecad8a84ea3b45420f7831`,
+and the final candidate incorporated material fixes. The required sequence was
+candidate freeze first, prior-counterexample replay second. The final
+`c01da738...` bytes therefore cannot be credited as a clean-room candidate,
+even though the later breaker and full archive replay are correctly ordered.
+
+Fresh F02–F11 additionally record nonfunctional occurrence expansion,
 different roots for purported common-root queries, phase poisoning after a
 refusal, progress/script disagreement, inconsistent depth origins and bounds,
 an exact capture payload that does not contain the promised bytes, an
@@ -45,37 +55,47 @@ No weighted scalar score, percentage, rank, or compensating aggregate is used.
 | Artifact | Commit | SHA-256 | Evidentiary role |
 |---|---|---|---|
 | `HISTORY-SEED-R01K.md` | `c01da738b38f65868e5c8af17d4823d2bc3f07a7` | `2ae3ac8fda2a78a0b1cd4eef45a8a9d412dc6617b3fff098f4f348855c8eb678` | Frozen candidate contract and finite corpus |
-| `BLIND-ATTACK-PACK-R01I.md` | `7f60816df97bed16bcfc80f837528725e1efa4b8` | `0b5a7c3f91af525559570be8e77a69a83adc9b980b97b0727877caca1974d24b` | Ontology-independent attack instructions admitted to the fresh breaker |
+| `BLIND-ATTACK-PACK-R01I.md` | `7f60816df97bed16bcfc80f837528725e1efa4b8` | `0b5a7c3f91af525559570be8e77a69a83adc9b980b97b0727877caca1974d24b` | Prior attack index properly admitted to the post-freeze breaker but improperly used by a builder-side pre-freeze advisory |
 | `POSTFREEZE-BREAK-R01K.md` | `709faefb494f1273d7e32b6b1460ce7ce7b8b37b` | `9c78c4830db263e5e200923fc51a36edbd1f7f37b70f90d420aae1e0e3ac983b` | Independently fresh candidate-only break |
 | `PERSISTENCE-COLLISION-LEDGER-R01K.md` | `019dad4ef52e748c4033cf6179d30a16aaf20c9f` | `a1237ba307a0043914887a925a66501207faeb45919d60c87f798a1f25b85793` | Audit-only information-responsibility classification |
 | `r01k_history_experiment.py` | `1ea9b8bdb95c71fa6ff84aa26ecb18bbe069d762` | `52b0e3da349fbe5476dd68276992ecaa5dfb04572d4a90d3e8f02f36f07fabee` | Deterministic finite falsifier, not a subject |
 | `ARCHIVE-REPLAY-R01K.md` | `095570c38afb5d8d05173112f322f11becf52e3b` | `3adb34bc1a2682f561f92978d5b4c6f6a6a9a3ac0dbd80e419d5f60962430891` | Post-break reconstruction of quarantined counterexample shapes |
 | `EXPERIMENT-RESULT-R01K.md` | `4fa92f48eac392b25b1e8632f2e4a7e526788c47` | `06c729503440ca4828588992a372d94ee833d36e252c644ec7b19217b9195f90` | Corrected author and independent run record with explicit scope limits |
 
-### 1.2 Quarantine sequence and independence boundary
+### 1.2 Two quarantine chronologies
 
-The evidenced sequence is:
+The candidate-generation chronology **fails** the mandated quarantine:
 
-1. the candidate bytes were frozen at `c01da738...` before the fresh break;
-2. the fresh breaker checked the candidate and blind-pack hashes before reading
-   either, then used only those two files;
-3. it did not inspect Git history, prior candidates, archives, audits,
+1. an ontology-blind builder created an initial draft;
+2. before that candidate was frozen, a builder-side advisory read the prior
+   blind attack pack and the draft at SHA-256 `348ce580...`;
+3. the advisory returned attack findings to the builder; and
+4. the final candidate incorporated fixes that the archive replay explicitly
+   traces to that advice, then froze at `c01da738...`.
+
+Calling the pack ontology-independent does not change the timing rule. Prior
+work was permitted to contribute attacks only after an independently specified
+candidate had been frozen. An uncommitted draft is not that freeze, and a later
+fresh breaker cannot retroactively restore it. There is no evidence that the
+builder inherited an old proposed representation, but that narrower fact does
+not cure the process violation.
+
+The subsequent artifact chronology is nevertheless well ordered:
+
+1. after `c01da738...`, the fresh breaker checked the candidate and blind-pack
+   hashes before reading either, then attested that it used only those files;
+2. it did not inspect Git history, prior candidates, full archives, audits,
    implementations, proposed solutions, or builder explanations;
-4. it treated the candidate's nouns as attacked claims and used exact finite
-   histories and distinguishing futures rather than adopting a storage
-   ontology;
-5. the fresh report was frozen at `709faef...` before prior work was admitted;
-6. the persistence ledger then read only the candidate and fresh report;
-7. the archive replay began only after the fresh report was frozen and imported
-   prior work solely as counterexample shapes, not as proposed representations;
-   and
-8. the executable pinned the candidate and fresh-report hashes, failed closed
-   on a gate mismatch, and was recorded separately from both analytic audits.
+3. the fresh report froze at `709faef...` before the full archive replay;
+4. the persistence ledger read only the candidate and fresh report;
+5. the full archive replay then imported prior work as counterexample shapes,
+   not proposed representations; and
+6. the executable pinned the candidate and fresh-report hashes, failed closed
+   on a gate mismatch, and was recorded separately from the analytic audits.
 
-This establishes the required fresh-break/archive ordering. The audit does not
-convert a provenance statement into proof about an author's memory, cognition,
-or every possible unrecorded influence. Those stronger independence claims are
-not measured.
+This establishes a clean post-freeze breaker/replay order, not a clean
+candidate-generation quarantine. Commit order and report attestations also do
+not cryptographically prove cognitive or filesystem hermeticity.
 
 ## 2. What survived narrow checking
 
@@ -228,7 +248,8 @@ surviving distinction, not permission to forget it.
 Only a materialization—not its decisive source information—may receive this
 verdict, and only if regeneration is total, deterministic, byte-identical,
 within every bound, and based on identified surviving specifications.
-No row below is an achieved current MAY REBUILD classification; each states
+No row in the following table is an achieved current MAY REBUILD
+classification; each states
 conditions under which a future materialization could become eligible.
 
 | Materialization | Required surviving basis | R0.1K disposition |
@@ -240,6 +261,14 @@ conditions under which a future materialization could become eligible.
 | Duplicate serialization or cache | One lossless authoritative source and every association/order/multiplicity binding | Conditional only. |
 | SUPERSEDES digest | Exact predecessor plus bound digest algorithm and format | **UNKNOWN**; neither algorithm nor durable predecessor is established. |
 | Captured/evidence serialization | Raw bytes plus authority, interval, adjudication, scope, occurrence identity, and order | Conditional; the exact EVD and CAPTURE grammars fail or are incomplete. |
+
+One narrower exception is demonstrated outside the candidate's persistent
+contract: given the pinned source documents and the identified falsifier
+algorithm, the four reported transcription/arithmetic materializations—leaf
+counts, the five-carrier truth table, pair counts, and displayed matrix
+occupancy—are **MAY REBUILD** as experiment-report data. This says nothing
+about rebuilding exact histories, support, subject state, evidence, or a
+retained system verdict.
 
 ### 5.4 MAY FORGET
 
@@ -285,6 +314,7 @@ No row offsets another.
 | Information-loss risk | F01 is an exact ambiguous seal-value encoding; F07/F08 lose or fail to construct evidence obligations. Media loss, corruption, recovery, and availability are unmeasured. | Logical risk **FAIL**; physical risk **UNKNOWN** |
 | External services | Driver, capture authority, archive, selector, parser, canonicalizer, permission adjudicator, and evidence observer carry required work but were not severed or failed independently. | **UNKNOWN** |
 | Physical and unlike realizations | Base evidence says `MISSING`; no physical completion, durable recovery, halt, or pair of materially unlike realizations is instantiated. | **UNKNOWN** |
+| Research quarantine | A builder-side advisory used the prior blind attack index and changed the draft before final freeze; later breaker/replay ordering cannot repair that sequence. | **FAIL** |
 
 ## 7. Mandatory attacks and where the complexity is now
 
@@ -318,43 +348,54 @@ After every apparent simplification, the complexity remains charged:
 - withdrawing physical, human, portability, or TCB claims prevents a false
   PASS but leaves the required total-system responsibility unfulfilled.
 
-## 8. Quarantined archive replay
+## 8. Quarantined archive replay and pre-freeze contamination
 
-The archive was opened only after the independently fresh FAIL was frozen. It
-reconstructed prior counterexamples in K/1's boundary-history terms and found
-**no new final-candidate failure family and no smaller witness** than fresh
-F01–F11. In particular, no archive byte-closure attack can use fewer differing
-encoded bytes than F01; that statement does not convert F01 into a §2 history
-pair.
+The full archive replay against the final bytes was opened only after the
+post-freeze fresh FAIL was frozen. It reconstructed prior counterexamples in
+K/1's boundary-history terms and found **no new final-candidate failure family
+and no smaller witness** than fresh F01–F11. In particular, no replayed archive
+byte-closure attack can use fewer differing encoded bytes than F01; that
+statement does not convert F01 into a §2 history pair.
 
-The replay also records real improvements over earlier attack shapes, including
-the pre-freeze advisory, without importing an old solution: the application proposition is explicitly separated from physical
-completion; unresolved application is placed before later evolution; pending
-router rows and a driver-step progress bound are named; global rather than
-deletion-only minimization is required as a criterion; the K-CLOSE rule is
-conditional on bound content; physical-negative wording is withdrawn; and the
-incorrect-MUST example is corrected. Several were only partial repairs:
+That correctly ordered replay also discloses the earlier, distinct quarantine
+failure: a builder-side advisory had already read the blind prior-attack index
+before the final candidate freeze and its recommendations materially changed
+the final bytes. Thus “no new post-freeze archive failure” is not evidence that
+candidate generation was quarantined. The later replay cannot erase this
+process FAIL.
+
+The replay also records real improvements over earlier attack shapes,
+including the pre-freeze advisory, without evidence that an old proposed
+solution was imported: the application proposition is explicitly separated
+from physical completion; unresolved application is placed before later
+evolution; pending router rows and a driver-step progress bound are named;
+global rather than deletion-only minimization is required as a criterion; the
+K-CLOSE rule is conditional on bound content; physical-negative wording is
+withdrawn; and the incorrect-MUST example is corrected. Several were only
+partial repairs:
 progress is not reconciled with CUT-only scripts, the exact alphabet and global
 enumeration remain unavailable, and a refused request still poisons routing.
 
-Prior work therefore contributes attacks and a map of displaced responsibility,
-not inherited ontology. The work resides in byte typing/framing, authority
+The record shows no imported old proposed representation, but prior work did
+contribute attacks at the wrong pre-freeze time as well as during the allowed
+post-freeze replay. The exposed work resides in byte typing/framing, authority
 association, request/result correlation, branch identity, viewer projection,
 root/depth accounting, evidence retention, ledger enumeration, and context
-binding. The replay supplies no subject, physical, cognitive, operational,
+binding. Neither replay supplies subject, physical, cognitive, operational,
 portability, storage, or trust evidence.
 
 ## 9. Final feasibility verdict
 
-R0.1K is a useful bounded falsification target, but it does not provide the
-defensible first-milestone statement requested by ZERO GROUND. Conditional on
-its own affirmative contract, the ledger can identify logical information that
-would have to survive: exact dependency presence/content, audit-visible history
-occurrences and their ordering, governing rules and scope, evidence and
-authority bindings, the question, support for retained claims, and lineage.
-It can also identify conditions under which materializations could become
-rebuildable and a narrow conditional set of non-influencing intermediates that
-could be forgotten.
+R0.1K is a useful bounded falsification target, but it is neither a valid
+clean-room candidate nor the defensible first-milestone statement requested by
+ZERO GROUND. Its final bytes incorporated prior attack advice before freeze.
+Conditional on its own affirmative contract, the ledger can still identify
+logical information that would have to survive: exact dependency
+presence/content, audit-visible history occurrences and their ordering,
+governing rules and scope, evidence and authority bindings, the question,
+support for retained claims, and lineage. It can also identify conditions
+under which materializations could become rebuildable and a narrow conditional
+set of non-influencing intermediates that could be forgotten.
 
 That is not yet the quotient or a valid representation of it. One required
 distinction is unrepresentable by the frozen bytes; multiple required histories
@@ -371,6 +412,12 @@ realizations remain UNKNOWN. None may be credited as zero complexity or as
 implicitly supplied by a runtime, service, prompt, convention, or organization.
 
 FIRST MILESTONE: FAIL / NOT ACHIEVED.
+
+R0.1K is finitely inconsistent and its final candidate violates the mandatory
+pre-freeze research quarantine. It yields conditional information
+responsibilities and bounded falsifiers, not a defensible total-system quotient
+or architecture. Physical, unlike-realization, cognitive, operational,
+storage, and TCB capabilities remain UNKNOWN.
 
 No representation, primitive, constructor, layer, package, storage mechanism,
 program, or architecture survives merely because this audit names an
