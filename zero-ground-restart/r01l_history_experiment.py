@@ -315,7 +315,37 @@ record(
 )
 
 minimization_mismatches = []
+minimization_audits = 0
 for name, encoder in NS["cands"]:
+    minimization_audits += 1
+    reference = reference_pair(NS["collision"](encoder))
+    exact = normalized_pair(
+        NS["hist"],
+        exact_collision(
+            NS["hist"],
+            encoder,
+            NS["sid"],
+            NS["eq"],
+            NS["sigs"],
+            NS["futs"],
+        ),
+    )
+    if reference != exact:
+        minimization_mismatches.append(
+            {"candidate": name, "reference": reference, "exact": exact}
+        )
+
+projection_minimization_cases = (
+    ("projected3", (0, 2, 3), "ordered"),
+    ("delete-operation", (2, 3), "ordered"),
+    ("delete-target", (0, 3), "ordered"),
+    ("delete-argument", (0, 2), "ordered"),
+    ("delete-order-as-bag", (0, 2, 3), "bag"),
+    ("delete-order-as-set", (0, 2, 3), "set"),
+)
+for name, kept, mode in projection_minimization_cases:
+    minimization_audits += 1
+    encoder = NS["proj"](kept, mode)
     reference = reference_pair(NS["collision"](encoder))
     exact = normalized_pair(
         NS["hist"],
@@ -337,7 +367,10 @@ record(
     "R02",
     "PASS" if not minimization_mismatches else "FAIL",
     "The reference collision routine returns the declared exact pair minimum.",
-    {"mismatches": minimization_mismatches},
+    {
+        "audited_encoders": minimization_audits,
+        "mismatches": minimization_mismatches,
+    },
 )
 
 d1_histories = build_d1_histories()
