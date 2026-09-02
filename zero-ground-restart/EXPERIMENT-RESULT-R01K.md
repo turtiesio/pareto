@@ -87,7 +87,10 @@ a renumbering of the fresh break's F01-F11 sequence.
    length-prefixed encodings are both
    `00000007554e424f554e44`. There is zero encoded-byte difference. A permitted
    dependency-sensitive continuation can require `UNKNOWN:UNBOUND-DEPENDENCY`
-   for the first and a decided result for the second.
+   for the first and a decided result for the second. These are two intended
+   seal/dependency states, not two literal §2 boundary histories supplied by
+   the candidate; obtaining a history-pair theorem would first require exact
+   boundary occurrences that bind those dependency inputs.
 
 2. `F02 sequential_query_common_root` expands the written sequential MAY then
    MUST corpus. The MAY root is just `DECL:K/1`; the MUST root additionally
@@ -129,10 +132,12 @@ a renumbering of the fresh break's F01-F11 sequence.
    of both.
 
 9. `F09 terminal_matrix_vs_terminal_refusal` holds a terminal-tail history and
-   ATTEMPT request fixed. The router matrix prescribes `TERMINAL`; the literal
-   tail prescribes `TERMINAL-REFUSAL`. This is an additional executable literal
-   inconsistency in the router/progress family, not an added persisted
-   category.
+   ATTEMPT request fixed. The router matrix names constructor label `TERMINAL`;
+   the literal tail names exact result `TERMINAL-REFUSAL`. No expansion equates
+   or distinguishes them. The frozen text therefore fails to determine one
+   exact constructor result. This is an additional literal mapping
+   inconsistency in the router/progress family, not proof of two necessarily
+   different wire answers and not an added persisted category.
 
 10. `F10 limited_viewer_observation_constructor` finds that limited OBSERVE is
     routed to `N`, while every declared chunk constructor exposes a forbidden
@@ -144,7 +149,9 @@ a renumbering of the fresh break's F01-F11 sequence.
     The directionless abbreviation, missing CUT authorities, category-only
     mutants, and absent materialized E ledger block that construction. The
     smallest blocking member is the single directionless abbreviation from
-    F05.
+    F05. The exact-`P_K` nonfunctionality makes the affirmative reproducibility
+    claim fail. Absence of a completed E enumeration or global minimization run
+    is separately UNKNOWN/unissued, not an additional collision by itself.
 
 This list does not executable-reproduce every independently reported fresh
 failure one-for-one. For example, the fresh report separately minimizes the
@@ -152,6 +159,25 @@ singleton pre-RECOVER depth error. Conversely, executable F09 makes explicit a
 literal terminal-result conflict that belongs to an already failed
 router/progress responsibility. The fresh report remains the authority for its
 own eleven independent audit findings.
+
+The exact crosswalk is:
+
+| Fresh-break finding | Executable coverage |
+|---|---|
+| fresh F01 marker/content collision | executable F01 |
+| fresh F02 nonfunctional occurrence expansion | executable F05; downstream executable F11 |
+| fresh F03 unequal query roots | executable F02 |
+| fresh F04 refused-EVOLVE phase poisoning | executable F07 |
+| fresh F05 progress closure | executable F06; executable F09 is a related literal-mapping check |
+| fresh F06 singleton pre-RECOVER depth | not executed |
+| fresh F07 retained capture literal | executable F08 |
+| fresh F08 unconstructible ledger | executable F11 |
+| fresh F09 depth-seven conflict | executable F03 |
+| fresh F10 nonunique `N(h,r)` | executable F04 |
+| fresh F11 limited viewer route | executable F10 |
+
+Executable F09 has no separate fresh-break ID. This non-isomorphism prevents
+the matching count of eleven from being mistaken for complete reproduction.
 
 ## Four narrow passes
 
@@ -183,12 +209,17 @@ by this executable. Their absence is not zero complexity.
 
 ## Persistence interpretation
 
-The decisive executable collision is F01. Deleting the binding or using the
-candidate's marker merges two meanings into identical persisted bytes although
-a permitted dependency-sensitive future can distinguish them. Thus the
-responsibility to preserve bound-versus-unbound status and opaque content is
-**MUST SURVIVE** under the candidate's affirmative contract. This witness does
-not imply a field, tag, record, object, layer, or other representation.
+The decisive executable transport collision is F01. Deleting the binding or
+using the candidate's marker merges two intended dependency states into
+identical persisted seal bytes although a dependency-sensitive classification
+can require decided versus UNKNOWN. Thus the responsibility to preserve
+bound-versus-unbound status and opaque content is **MUST SURVIVE** under the
+candidate's affirmative byte-closure and retained-verdict contract. Because
+the candidate does not make those dependency inputs exact boundary
+occurrences, F01 is not by itself a literal pair of §2 histories and is not
+presented as a complete quotient theorem. It falsifies the claimed seal
+transport. The responsibility does not imply a field, tag, record, object,
+layer, or other representation.
 
 The exact CAPTURE promise would also make original retained chunk and expiry
 bytes logically **MUST SURVIVE** when a future is allowed to reproduce them.
@@ -196,21 +227,24 @@ F08 shows that the named literal answer does not discharge that responsibility.
 The experiment therefore cannot grant an operational PASS to the candidate's
 HISTORY retention claim.
 
-Mechanically reproducible counts and tables may be **MAY REBUILD** only after
+Mechanically reproducible counts and tables would be **MAY REBUILD** only after
 their source alphabet, expansion, authorities, and specification are complete
-and identified. F05 and F11 prevent that premise here. No positive
+and identified. F05 and F11 prevent that premise here, so this is a conditional
+possibility rather than an achieved R0.1K classification. No positive
 **MAY FORGET** verdict is inferred merely because the executable did not test a
 piece of information.
 
 ## Result
 
-The frozen R0.1K candidate is finitely falsified. One zero-byte-difference
-collision already violates
-`encode(h1) = encode(h2) => h1 ≡ h2`; the other checks expose independent
-common-root, depth, progress, routing, exact-capture, viewer, and ledger
-contradictions. Complexity has moved into an unstated disjoint codec, exact
-occurrence expander, branch/root controller, lifecycle correlator, projection
-engine, archive, minimizer, and TCB evidence process.
+The frozen R0.1K candidate is finitely falsified. Its zero-byte-difference
+dependency-state collision falsifies the affirmative canonical seal transport;
+it would also violate
+`encode(h1) = encode(h2) => h1 ≡ h2` once those dependency inputs were supplied
+as exact histories, which the frozen candidate does not do. The other checks
+expose common-root, depth, progress, routing, exact-capture, viewer, and ledger
+contradictions or underdefinitions. Complexity has moved into an unstated
+disjoint codec, exact occurrence expander, branch/root controller, lifecycle
+correlator, projection engine, archive, minimizer, and TCB evidence process.
 
 The experiment selects no representation and establishes no architecture. It
 only supplies bounded witnesses and narrow controls for the persistence ledger
