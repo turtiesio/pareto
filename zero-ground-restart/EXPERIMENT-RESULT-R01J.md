@@ -1,4 +1,4 @@
-# R0.1J executable all-cut experiment result
+# R0.1J executable finite-history experiment result
 
 ## Frozen inputs
 
@@ -24,7 +24,7 @@ reported:
 | PASS | 63 |
 | FAIL | 5 |
 | UNKNOWN | 4 |
-| Semantic runtime recorded in JSON | 287.949434 s |
+| Whole-program elapsed time recorded in JSON | 287.949434 s |
 | Wrapper wall time | 288.049929 s |
 | Maximum resident set | 175,232 KiB |
 | Whole-stdout SHA-256 | `fa132536f0aff45e2592f23cccd04c88cd7e50bfb51cd409b4a89a705b12a930` |
@@ -45,11 +45,14 @@ and reported:
 | Maximum resident set | 174,052 KiB |
 | Whole-stdout SHA-256 | `7d7aff5aff0e9ce04a1ac7ebcc316361428efca2ff24d2b21fa80e7f1a558588` |
 
-The two whole-stdout hashes are expected to differ: the JSON contains the
-measured runtime. No claim of byte-identical whole-report regeneration is made.
-The frozen source, candidate identity, finite counts, named verdicts, and exit
-behavior agree; the run-specific timing value does not participate in the
-candidate's quotient.
+The JSON contains measured runtime, so byte-identical whole-report regeneration
+is not expected. The unequal hashes alone do not prove that timing is their only
+difference and do not independently reproduce the named verdicts. The author's
+full-output run supplies the 63/5/4 summary and names; the separate run verifies
+the exact frozen source's exit behavior and resource envelope and supplies an
+independent whole-output digest. No runtime-stripped normalized comparison was
+performed. Run-specific timing does not participate in the candidate's
+quotient.
 
 ## Directly executed finite domain
 
@@ -62,8 +65,11 @@ The executable directly constructs and folds:
 - all 1,208,272 recovery histories, 7,696 from each clean history;
 - all 1,208,429 declared clean and recovery cuts;
 - all 854 normalized recovery conditions and their seven phase/family counts;
-- the all-cut PUBLIC and contractual future partitions;
-- the decision-key closure `D` and one-crash gap-key closure `G`;
+- the partitions of 854 normalized recovery conditions under 1,885 fixed
+  failure-free request words of length zero through three, applying the same
+  word to both selector branches;
+- the decision-key closure `D` and one-crash gap-key closure `G`, seeded from
+  fourteen clean residual coordinates and the normalized recovery conditions;
 - all eight FIN-path scheduler masks for the bounded clean separator checks;
 - structural and negative controls for cut, controller, scheduler, witness,
   evidence-case, and manifest codecs; and
@@ -75,7 +81,7 @@ enumeration digest, and counted. Quotient signatures are evaluated over the
 The executable does not relabel that lift as 1,208,272 independent future
 evaluations.
 
-## Formal claims reproduced
+## Bounded formal results reproduced
 
 The finite formal model reproduces:
 
@@ -85,18 +91,26 @@ The finite formal model reproduces:
 | Clean residual classes | 14 |
 | Exact recovery histories | 1,208,272 |
 | Normalized recovery conditions | 854 |
-| Recovery PUBLIC quotient | 139 |
-| Recovery contractual quotient | 315 |
-| Combined PUBLIC quotient | 153 |
-| Combined contractual quotient | 329 |
+| Fixed-word recovery PUBLIC partition | 139 |
+| Fixed-word recovery contractual partition | 315 |
+| Derived combined PUBLIC image count | 153 |
+| Derived combined contractual class count | 329 |
 | `D` closure | 82,224 |
 | `G` closure | 64,067 |
 
+The 153/329 results combine the normalized recovery refinement, fourteen clean
+residual classes, and a FIN/pass clean-versus-recovery no-merger witness. The
+script does not enumerate the full adaptive controller-table universe and does
+not prove that the fixed-word probe basis is complete for that universe. The
+fresh blind and literal audits provide separate support for the quoted counts;
+this executable result does not silently import their stronger claim.
+
 It also reproduces the candidate's exact clean class-size multiset, normalized
-recovery family counts, clean separation controls, Q1/Q2 bounded canonical
-witness controls, total formal routing over its derived start phases, exact
-FIN/terminal STOPPED behavior, negative codec precedence controls, and literal
-source tables.
+recovery family counts, clean separation controls, Q1 minimization within eight
+FIN-path scheduler masks and eligible scopes, Q2 construction/separation/codec
+controls, seven representative start-phase routes under one FIN/no-crash
+policy pair, exact FIN/terminal STOPPED behavior for that pair, negative codec
+precedence controls, and literal source tables.
 
 These are passes about the frozen finite formal realization. They are not
 evidence that the persistence classification is complete, that a physical
@@ -104,6 +118,9 @@ realization exists, or that external evidence and trust responsibilities have
 been encoded.
 
 ## Five finite failures and their smallest exhibited collisions
+
+These five statuses are literal audit expectations added by the falsifier.
+They are not all failed numeric predictions printed by the candidate.
 
 1. `responsibility_table_includes_recovery_closure_owed` fails. Compare clean
    `H()` with its initial idle-recovery cut at the same residual. Under FIN and
@@ -142,8 +159,9 @@ needed to compute a multi-case verdict.
 
 ## Four executable UNKNOWNs
 
-- `arbitrary_pair_canonical_witness_search`: exact global minimization was run
-  only for the frozen Q1/Q2 controls.
+- `arbitrary_pair_canonical_witness_search`: only Q1 is minimized within the
+  eight FIN-path masks and scopes; Q2 is constructed and checked, and neither
+  establishes arbitrary-pair global minimization.
 - `zero_case_manifest_evidentiary_adequacy`: a syntactically valid zero-case
   manifest establishes no generator, verifier, or realization property.
 - `origin0_only_manifest_is_not_a_verifier_test`: generated valid traces do not
@@ -159,11 +177,13 @@ They are not counted as passes merely because the finite formal core runs.
 
 ## Interpretation
 
-The experiment confirms the new candidate's central quotient arithmetic and
-falsifies its claim to a complete persistence verdict. In particular, the
-formal 153/329 partition is not yet the contractual history quotient: one
-future-visible phase responsibility is missing, and the audit result depends on
-information absent from the purported evidence carrier.
+The experiment reproduces the candidate's central quotient arithmetic under
+its bounded fixed-word probe basis and falsifies its claim to a complete
+persistence verdict. The missing Q7 responsibility does not invalidate the
+formal 153 PUBLIC-image and 329 contractual-class counts; it shows that the
+candidate's stated persistence classification fails to name information that
+its own quotient already distinguishes. Separately, its audit result depends
+on information absent from the purported evidence carrier.
 
 This result selects no persistent representation. It supplies finite witnesses
 for the corrected persistence ledger and reusable attacks for the next
