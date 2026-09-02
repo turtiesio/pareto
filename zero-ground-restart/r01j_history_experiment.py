@@ -1129,6 +1129,55 @@ def dec_witness_structure(data: bytes) -> tuple[int, bytes, bytes, bytes, bytes]
     return scope, left, right, controller, scheduler
 
 
+def witness_order_tuple(witness: bytes, left_branches: Sequence[Trace],
+                        right_branches: Sequence[Trace], scope: int) -> tuple:
+    branches = tuple(left_branches) + tuple(right_branches)
+    ordinary = [sum(c[0] == C_FRAME for c in branch) for branch in branches]
+    totals = [len(branch) for branch in branches]
+    return (max(ordinary), sum(ordinary), max(totals), sum(totals), len(branches),
+            sum(sum(c[0] == F_FRAME and c[1].startswith(b"CRASH GAP=") for c in branch)
+                for branch in branches),
+            scope, len(witness), witness)
+
+
+def classify_witness(data: bytes, d_keys: Sequence[bytes], g_keys: Sequence[bytes],
+                     canonical_pair: tuple[bytes, bytes], q1: bytes, q2: bytes) -> str:
+    try:
+        scope, left, right, ctl, sch = dec_witness_structure(data)
+    except DecodeError:
+        return "UNSUPPORTED(ENCODING)"
+    for cut in (left, right):
+        reason = cut_error_reason(cut)
+        if reason != "SUPPORTED":
+            return reason
+    try:
+        left_info = dec_cut(left)[1]
+        right_info = dec_cut(right)[1]
+    except DecodeError:
+        return "UNSUPPORTED(CUT)"
+    try:
+        actions = dec_controller(ctl, d_keys)
+    except DecodeError:
+        return "UNSUPPORTED(CONTROLLER)"
+    try:
+        bits = dec_scheduler(sch, g_keys)
+    except DecodeError:
+        return "UNSUPPORTED(SCHEDULER)"
+    if scope not in range(5):
+        return "UNSUPPORTED(VIEWER)"
+    if not left < right:
+        return "UNSUPPORTED(PAIR_ORDER)"
+    evaluator = Evaluator(d_keys, actions, g_keys, bits)
+    branches = evaluator.evaluate(left_info), evaluator.evaluate(right_info)
+    scope_name = next(name for name, code in SCOPE_CODE.items() if code == scope)
+    if enc_obs(branches[0], scope_name) == enc_obs(branches[1], scope_name):
+        return "UNSUPPORTED(NOT_SEPARATOR)"
+    if (left, right) == canonical_pair:
+        canonical = q2 if scope == SCOPE_CODE["PUBLIC"] else q1
+        return "SUPPORTED" if data == canonical else "NONCANONICAL(WITNESS)"
+    return "UNKNOWN(CANONICAL_SEARCH)"
+
+
 def clean_behavior_checks(clean_rows: list[tuple[Trace, Residual]], infos: tuple[CutInfo, ...],
                           d_keys: Sequence[bytes], g_keys: Sequence[bytes],
                           report: Report) -> dict[str, bytes]:
@@ -1260,6 +1309,29 @@ def clean_behavior_checks(clean_rows: list[tuple[Trace, Residual]], infos: tuple
     left_trace, right_trace = sorted((empty_trace, clean_history(("O0",))[0]), key=enc_cut)
     q1 = enc_witness(SCOPE_CODE["SELECTOR"], left_trace, right_trace, crash_ctl, crash_sch)
     q2 = enc_witness(SCOPE_CODE["PUBLIC"], left_trace, right_trace, x_ctl, zero_sch)
+    pair_infos = parse_cut_trace(left_trace), parse_cut_trace(right_trace)
+    zero_c_candidates: list[tuple] = []
+    for mask in range(8):
+        keys = tuple(key for i, key in enumerate(fin_path_keys) if mask & (1 << i))
+        evaluator, ctl, sch = make_evaluator(d_keys, g_keys, crash_keys=keys)
+        branches = evaluator.evaluate(pair_infos[0]), evaluator.evaluate(pair_infos[1])
+        for scope_name, scope_code in SCOPE_CODE.items():
+            if enc_obs(branches[0], scope_name) != enc_obs(branches[1], scope_name):
+                witness = enc_witness(scope_code, left_trace, right_trace, ctl, sch)
+                zero_c_candidates.append(witness_order_tuple(witness, *branches, scope_code))
+    report.true("Q1_exact_canonical_among_all_zero_C_FIN_scheduler_outcomes",
+                bool(zero_c_candidates) and min(zero_c_candidates)[-1] == q1,
+                scope="direct_8_scheduler_masks_x5_scopes")
+    q1_eval = Evaluator(d_keys, dec_controller(crash_ctl, d_keys),
+                         g_keys, dec_scheduler(crash_sch, g_keys))
+    q2_eval = Evaluator(d_keys, dec_controller(x_ctl, d_keys),
+                         g_keys, dec_scheduler(zero_sch, g_keys))
+    report.findings["witness_order_metrics"] = {
+        "Q1": list(witness_order_tuple(q1, q1_eval.evaluate(pair_infos[0]),
+                                       q1_eval.evaluate(pair_infos[1]), SCOPE_CODE["SELECTOR"])[:-1]),
+        "Q2": list(witness_order_tuple(q2, q2_eval.evaluate(pair_infos[0]),
+                                       q2_eval.evaluate(pair_infos[1]), SCOPE_CODE["PUBLIC"])[:-1]),
+    }
     report.findings["canonical_witnesses"] = {
         "Q1_contractual": {"sha256": digest(q1), "length": len(q1)},
         "Q2_PUBLIC": {"sha256": digest(q2), "length": len(q2)},
@@ -1588,10 +1660,12 @@ def classifier_and_evidence_checks(candidate_bytes: bytes, d_keys: Sequence[byte
         "non_ASCII": (((C_FRAME, b"\xff"),) + base_trace[1:],),
         "empty_family": (),
     }
+    variant_cases: dict[str, bytes] = {}
     for name, raw_family in raw_variants.items():
         obs = enc_evidence_observation(0, enc_raw_family(raw_family))
         case = enc_evidence_case(1, artifacts["empty_cut"], artifacts["fin_ctl"],
                                  artifacts["zero_sch"], obs)
+        variant_cases[name] = case
         controls[name] = (manifest_for((case,)), "FAIL(CONFORMANCE)")
 
     wrong_formal_obs = enc_evidence_observation(0, enc_raw_family(()))
@@ -1652,6 +1726,33 @@ def classifier_and_evidence_checks(candidate_bytes: bytes, d_keys: Sequence[byte
     report.unknown("origin0_only_manifest_is_not_a_verifier_test",
                    "the seed explicitly says generated valid traces do not exercise negative rejection")
 
+    # Kind 1 has an obligatorily empty body. Therefore these observably distinct
+    # captures have identical evidence bytes: expiry before any crossing, and
+    # expiry after the typed FIN crossing was captured.
+    timeout_before_any = timeout_obs
+    timeout_after_fin = timeout_obs
+    report.check("timeout_progress_evidence_is_collision_free",
+                 timeout_before_any != timeout_after_fin, True,
+                 scope="literal_codec_collision",
+                 left="timeout before any crossing",
+                 right="captured typed C:FIN then timeout",
+                 encoded_observation_sha256=digest(timeout_obs))
+
+    mixed_manifest = manifest_for((timeout_case, variant_cases["wrong_payload"]))
+    mixed_result = classify_manifest(mixed_manifest, candidate_digest, d_keys, g_keys, None)
+    report.check("finite_conformance_failure_survives_mixed_timeout_manifest",
+                 mixed_result, "FAIL(CONFORMANCE)",
+                 scope="literal_classifier_precedence",
+                 observed_precedence="timeout UNKNOWN precedes origin-1 finite inequality")
+
+    second_timeout_case = enc_evidence_case(1, artifacts["o0_cut"], artifacts["fin_ctl"],
+                                            artifacts["zero_sch"], timeout_obs)
+    two_timeout_manifest = manifest_for((timeout_case, second_timeout_case))
+    report.check("two_timeout_cases_have_per_case_envelope_binding_and_tie_rule",
+                 False, True, scope="literal_semantic_underdetermination",
+                 manifest_sha256=digest(two_timeout_manifest),
+                 scenario="one case is externally qualified NON_TOTAL and the other is not")
+
     without_envelope = classify_manifest(timeout_manifest, candidate_digest, d_keys, g_keys, None)
     with_unbound_flag = classify_manifest(timeout_manifest, candidate_digest, d_keys, g_keys, True)
     report.check("same_manifest_has_context_independent_total_verdict",
@@ -1666,6 +1767,8 @@ def classifier_and_evidence_checks(candidate_bytes: bytes, d_keys: Sequence[byte
         "manifest_only": without_envelope,
         "external_boolean_true": with_unbound_flag,
         "conclusion": "the advertised manifest classifier is not a function of manifest bytes without an unbound external context",
+        "mixed_timeout_and_conformance": mixed_result,
+        "two_timeout_manifest_sha256": digest(two_timeout_manifest),
     }
 
     # Exact separator structural codecs and admissibility controls.
@@ -1686,6 +1789,52 @@ def classifier_and_evidence_checks(candidate_bytes: bytes, d_keys: Sequence[byte
     report.true("Q1_lower_projected_scopes_inadmissible",
                 all(enc_obs(q1_branches[0], name) == enc_obs(q1_branches[1], name)
                     for name in ("PUBLIC", "CLIENT", "CAPTURE")))
+
+    canonical_pair = (q1_left, q1_right)
+    q1_priv = (WITNESS_MAGIC + u8(SCOPE_CODE["PRIV"]) + block(q1_left) + block(q1_right) +
+               block(q1_ctl) + block(q1_sch))
+    q1_public = (WITNESS_MAGIC + u8(SCOPE_CODE["PUBLIC"]) + block(q1_left) + block(q1_right) +
+                 block(q1_ctl) + block(q1_sch))
+    q1_bad_viewer = (WITNESS_MAGIC + u8(5) + block(q1_left) + block(q1_right) +
+                     block(q1_ctl) + block(q1_sch))
+    q1_reversed = (WITNESS_MAGIC + u8(q1_scope) + block(q1_right) + block(q1_left) +
+                   block(q1_ctl) + block(q1_sch))
+    q1_equal = (WITNESS_MAGIC + u8(q1_scope) + block(q1_left) + block(q1_left) +
+                block(q1_ctl) + block(q1_sch))
+    invalid_trace = dec_cut(q1_left)[0] + ((C_FIN, b""),)
+    invalid_cut = CUT_MAGIC + block(enc_trace(invalid_trace))
+    q1_bad_cut = (WITNESS_MAGIC + u8(q1_scope) + block(invalid_cut) + block(q1_right) +
+                  block(q1_ctl) + block(q1_sch))
+    crossing_cut = CUT_MAGIC + block(seq((u8(255) + block(b"opaque"),)))
+    q1_bad_crossing = (WITNESS_MAGIC + u8(q1_scope) + block(crossing_cut) + block(q1_right) +
+                       block(q1_ctl) + block(q1_sch))
+    bad_ctl = bytearray(q1_ctl)
+    bad_ctl[len(CTL_MAGIC) + 8] = 13
+    q1_bad_ctl = (WITNESS_MAGIC + u8(q1_scope) + block(q1_left) + block(q1_right) +
+                  block(bytes(bad_ctl)) + block(q1_sch))
+    q1_bad_sch = (WITNESS_MAGIC + u8(q1_scope) + block(q1_left) + block(q1_right) +
+                  block(q1_ctl) + block(q1_sch[:-1]))
+    witness_controls = {
+        "Q1_supported": (artifacts["q1"], "SUPPORTED"),
+        "Q2_supported": (artifacts["q2"], "SUPPORTED"),
+        "truncated": (artifacts["q1"][:-1], "UNSUPPORTED(ENCODING)"),
+        "bad_crossing": (q1_bad_crossing, "UNSUPPORTED(CROSSING)"),
+        "bad_cut": (q1_bad_cut, "UNSUPPORTED(CUT)"),
+        "bad_controller": (q1_bad_ctl, "UNSUPPORTED(CONTROLLER)"),
+        "bad_scheduler": (q1_bad_sch, "UNSUPPORTED(SCHEDULER)"),
+        "bad_viewer": (q1_bad_viewer, "UNSUPPORTED(VIEWER)"),
+        "reversed_pair": (q1_reversed, "UNSUPPORTED(PAIR_ORDER)"),
+        "equal_pair": (q1_equal, "UNSUPPORTED(PAIR_ORDER)"),
+        "nonseparator_scope": (q1_public, "UNSUPPORTED(NOT_SEPARATOR)"),
+        "valid_noncanonical_PRIV": (q1_priv, "NONCANONICAL(WITNESS)"),
+    }
+    witness_actual = {
+        name: classify_witness(value, d_keys, g_keys, canonical_pair,
+                               artifacts["q1"], artifacts["q2"])
+        for name, (value, _expected) in witness_controls.items()
+    }
+    report.check("witness_classifier_precedence_controls", witness_actual,
+                 {name: expected for name, (_value, expected) in witness_controls.items()})
 
     report.findings["raw_evidence_controls"] = observed_results
 
